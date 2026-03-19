@@ -1,5 +1,14 @@
 'use strict';
 
+// Message de bienvenue pour les utilisateurs
+console.log('\x1b[36m%s\x1b[0m', '╔══════════════════════════════════════════════════════════════╗');
+console.log('\x1b[36m%s\x1b[0m', '║           discord.js-selfbot-youtsuho-v13 chargé !           ║');
+console.log('\x1b[36m%s\x1b[0m', '╠══════════════════════════════════════════════════════════════╣');
+console.log('\x1b[33m%s\x1b[0m', '║  🐛 Si vous trouvez un bug, merci de le reporter sur :      ║');
+console.log('\x1b[33m%s\x1b[0m', '║  https://github.com/3T6-dsc/discord.js-selfbot-youtsuho-v13/issues ║');
+console.log('\x1b[36m%s\x1b[0m', '╚══════════════════════════════════════════════════════════════╝');
+console.log('');
+
 // "Root" classes (starting points)
 exports.BaseClient = require('./client/BaseClient');
 exports.Client = require('./client/Client');
