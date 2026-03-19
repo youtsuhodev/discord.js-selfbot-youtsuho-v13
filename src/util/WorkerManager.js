@@ -1,8 +1,9 @@
 'use strict';
 
-const { Worker } = require('node:worker_threads');
 const { EventEmitter } = require('node:events');
 const path = require('node:path');
+const { setTimeout } = require('node:timers');
+const { Worker } = require('node:worker_threads');
 
 /**
  * Types d'opérations supportées par les workers
@@ -33,18 +34,18 @@ class WorkerPool extends EventEmitter {
    */
   constructor(options = {}) {
     super();
-    
+
     this.size = options.size || Math.min(4, require('node:os').cpus().length);
     this.maxTasks = options.maxTasks || 100;
     this.taskTimeout = options.taskTimeout || 30000;
     this.workerScript = options.workerScript || path.join(__dirname, 'default-worker.js');
-    
+
     this.workers = [];
     this.taskQueue = [];
     this.busyWorkers = new Set();
     this.taskId = 0;
     this.pendingTasks = new Map();
-    
+
     this.stats = {
       totalTasks: 0,
       completedTasks: 0,
@@ -65,16 +66,16 @@ class WorkerPool extends EventEmitter {
   _initializeWorkers() {
     for (let i = 0; i < this.size; i++) {
       const worker = new Worker(this.workerScript);
-      
-      worker.on('message', (result) => {
+
+      worker.on('message', result => {
         this._handleWorkerMessage(worker, result);
       });
 
-      worker.on('error', (error) => {
+      worker.on('error', error => {
         this._handleWorkerError(worker, error);
       });
 
-      worker.on('exit', (code) => {
+      worker.on('exit', code => {
         if (code !== 0) {
           this.emit('error', new Error(`Worker stopped with exit code ${code}`));
           this._replaceWorker(worker);
@@ -104,7 +105,7 @@ class WorkerPool extends EventEmitter {
 
       // Vérifier si la file d'attente est pleine
       if (this.taskQueue.length >= this.maxTasks) {
-        reject(new Error('File d\'attente de tâches pleine'));
+        reject(new Error("File d'attente de tâches pleine"));
         return;
       }
 
@@ -158,6 +159,8 @@ class WorkerPool extends EventEmitter {
 
   /**
    * Gère les messages des workers
+   * @param {Object} workerInfo Informations du worker
+   * @param {Object} result Résultat du worker
    * @private
    */
   _handleWorkerMessage(workerInfo, result) {
@@ -191,6 +194,8 @@ class WorkerPool extends EventEmitter {
 
   /**
    * Gère les erreurs des workers
+   * @param {Object} workerInfo Informations du worker
+   * @param {Error} error Erreur survenue
    * @private
    */
   _handleWorkerError(workerInfo, error) {
@@ -208,6 +213,7 @@ class WorkerPool extends EventEmitter {
 
   /**
    * Gère le timeout des tâches
+   * @param {number} taskId ID de la tâche
    * @private
    */
   _handleTaskTimeout(taskId) {
@@ -230,6 +236,7 @@ class WorkerPool extends EventEmitter {
 
   /**
    * Remplace un worker défaillant
+   * @param {Object} oldWorkerInfo Ancien worker à remplacer
    * @private
    */
   _replaceWorker(oldWorkerInfo) {
@@ -238,9 +245,9 @@ class WorkerPool extends EventEmitter {
 
     // Créer un nouveau worker
     const newWorker = new Worker(this.workerScript);
-    newWorker.on('message', (result) => this._handleWorkerMessage(this.workers[index], result));
-    newWorker.on('error', (error) => this._handleWorkerError(this.workers[index], error));
-    newWorker.on('exit', (code) => {
+    newWorker.on('message', result => this._handleWorkerMessage(this.workers[index], result));
+    newWorker.on('error', error => this._handleWorkerError(this.workers[index], error));
+    newWorker.on('exit', code => {
       if (code !== 0) this._replaceWorker(this.workers[index]);
     });
 
@@ -266,7 +273,7 @@ class WorkerPool extends EventEmitter {
 
     // Arrêter les workers
     await Promise.all(this.workers.map(w => w.worker.terminate()));
-    
+
     this.workers = [];
     this.taskQueue = [];
     this.busyWorkers.clear();
@@ -280,9 +287,8 @@ class WorkerPool extends EventEmitter {
   getStats() {
     return {
       ...this.stats,
-      successRate: this.stats.totalTasks > 0 
-        ? ((this.stats.completedTasks / this.stats.totalTasks) * 100).toFixed(2) + '%'
-        : '0%',
+      successRate:
+        this.stats.totalTasks > 0 ? `${((this.stats.completedTasks / this.stats.totalTasks) * 100).toFixed(2)}%` : '0%',
       poolSize: this.size,
       busyWorkers: this.busyWorkers.size,
       availableWorkers: this.size - this.busyWorkers.size,
@@ -298,14 +304,14 @@ class WorkerManager extends EventEmitter {
     super();
     this.client = client;
     this.pools = new Map();
-    
+
     // Pool par défaut pour les opérations générales
     this.defaultPool = new WorkerPool({
       size: Math.min(4, require('node:os').cpus().length),
       maxTasks: 200,
     });
 
-    this.defaultPool.on('error', (error) => {
+    this.defaultPool.on('error', error => {
       this.client.emit('error', error);
     });
   }
@@ -329,7 +335,7 @@ class WorkerManager extends EventEmitter {
    */
   createPool(name, options) {
     const pool = new WorkerPool(options);
-    pool.on('error', (error) => {
+    pool.on('error', error => {
       this.client.emit('error', error);
     });
     this.pools.set(name, pool);

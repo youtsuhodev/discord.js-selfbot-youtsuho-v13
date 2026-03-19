@@ -1,7 +1,5 @@
 'use strict';
 
-const { EventBatcher } = require('./EventBatcher');
-
 /**
  * Handler pour les événements batchés
  * Traite les lots d'événements pour maintenir la compatibilité
@@ -10,7 +8,7 @@ class BatchEventHandler {
   constructor(client) {
     this.client = client;
     this.packetHandlers = null; // Sera initialisé plus tard
-    
+
     // Écouter les événements batchés
     this.client.on('batched_events', this.handleBatchedEvents.bind(this));
   }

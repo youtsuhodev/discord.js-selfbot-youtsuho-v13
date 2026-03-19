@@ -104,7 +104,23 @@ class EventBatcher {
    * @param {number} shardId ID du shard
    * @returns {boolean} true si l'événement a été batché, false si émis immédiatement
    */
-  addEvent(eventType, data, shardId) {
+  addEvent(
+    /**
+     * Type de l'événement
+     * @type {string}
+     */
+    eventType,
+    /**
+     * Données de l'événement
+     * @type {Object}
+     */
+    data,
+    /**
+     * ID du shard
+     * @type {number}
+     */
+    shardId,
+  ) {
     this.stats.totalEvents++;
 
     // Les événements critiques ne sont jamais batchés
@@ -147,6 +163,9 @@ class EventBatcher {
 
   /**
    * Émet un événement immédiatement sans batching
+   * @param {string} eventType Type de l'événement
+   * @param {Object} data Données de l'événement
+   * @param {number} shardId ID du shard
    * @private
    */
   _emitImmediate(eventType, data, shardId) {
@@ -164,9 +183,8 @@ class EventBatcher {
 
     // Mettre à jour les statistiques
     this.stats.batchesFlushed++;
-    this.stats.averageBatchSize = 
-      (this.stats.averageBatchSize * (this.stats.batchesFlushed - 1) + batch.length) / 
-      this.stats.batchesFlushed;
+    this.stats.averageBatchSize =
+      (this.stats.averageBatchSize * (this.stats.batchesFlushed - 1) + batch.length) / this.stats.batchesFlushed;
 
     // Émettre le batch
     this.client.emit('batched_events', batch);
@@ -178,10 +196,11 @@ class EventBatcher {
 
     // Log de performance en mode debug
     if (this.client.options?.debug) {
-      this.client.emit('debug', 
+      this.client.emit(
+        'debug',
         `[EventBatcher] Flush: ${batch.length} events | ` +
-        `Avg batch size: ${this.stats.averageBatchSize.toFixed(2)} | ` +
-        `Efficiency: ${((this.stats.batchedEvents / this.stats.totalEvents) * 100).toFixed(1)}%`
+          `Avg batch size: ${this.stats.averageBatchSize.toFixed(2)} | ` +
+          `Efficiency: ${((this.stats.batchedEvents / this.stats.totalEvents) * 100).toFixed(1)}%`,
       );
     }
   }
@@ -194,7 +213,7 @@ class EventBatcher {
       clearTimeout(this.flushTimer);
       this.flushTimer = null;
     }
-    
+
     // Flush final pour ne pas perdre d'événements
     this.flush();
   }
@@ -209,9 +228,7 @@ class EventBatcher {
       ...this.stats,
       runtime,
       eventsPerSecond: (this.stats.totalEvents / runtime) * 1000,
-      batchingEfficiency: this.stats.totalEvents > 0 
-        ? (this.stats.batchedEvents / this.stats.totalEvents) * 100 
-        : 0,
+      batchingEfficiency: this.stats.totalEvents > 0 ? (this.stats.batchedEvents / this.stats.totalEvents) * 100 : 0,
       currentBatchSize: this.currentBatch.length,
     };
   }

@@ -36,9 +36,9 @@ const Application = require('../structures/interfaces/Application');
 const { Events, Status } = require('../util/Constants');
 const DataResolver = require('../util/DataResolver');
 const Intents = require('../util/Intents');
+const { LazyManagerRegistry } = require('../util/LazyManagerRegistry');
 const DiscordAuthWebsocket = require('../util/RemoteAuth');
 const Sweepers = require('../util/Sweepers');
-const { LazyManagerRegistry } = require('../util/LazyManagerRegistry');
 const { WorkerManager } = require('../util/WorkerManager');
 
 /**
@@ -371,9 +371,16 @@ class Client extends BaseClient {
    */
   _setupLazyManagerGetters() {
     const managers = [
-      'users', 'guilds', 'channels', 'presences', 
-      'relationships', 'sessions', 'notes', 'billing', 
-      'settings', 'sweepers'
+      'users',
+      'guilds',
+      'channels',
+      'presences',
+      'relationships',
+      'sessions',
+      'notes',
+      'billing',
+      'settings',
+      'sweepers',
     ];
 
     for (const managerName of managers) {

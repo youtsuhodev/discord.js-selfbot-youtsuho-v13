@@ -1,6 +1,9 @@
 'use strict';
 
+const { Buffer } = require('node:buffer');
+const crypto = require('node:crypto');
 const { parentPort } = require('node:worker_threads');
+const zlib = require('node:zlib');
 const { OperationTypes } = require('./WorkerManager');
 
 /**
@@ -9,11 +12,9 @@ const { OperationTypes } = require('./WorkerManager');
  */
 
 // Importer les modules nécessaires
-const crypto = require('node:crypto');
-const zlib = require('node:zlib');
 
 // Gestionnaire des messages du thread principal
-parentPort.on('message', async (task) => {
+parentPort.on('message', async task => {
   try {
     const result = await executeTask(task);
     parentPort.postMessage({
@@ -41,31 +42,31 @@ async function executeTask(task) {
   switch (type) {
     case OperationTypes.IMAGE_PROCESSING:
       return processImageData(data, options);
-    
+
     case OperationTypes.ENCRYPTION:
       return encryptData(data, options);
-    
+
     case OperationTypes.DECRYPTION:
       return decryptData(data, options);
-    
+
     case OperationTypes.DATA_COMPRESSION:
       return compressData(data, options);
-    
+
     case OperationTypes.DATA_DECOMPRESSION:
       return decompressData(data, options);
-    
+
     case OperationTypes.JSON_PARSE:
       return parseJSONSafely(data);
-    
+
     case OperationTypes.JSON_STRINGIFY:
       return stringifyJSONSafely(data, options);
-    
+
     case OperationTypes.VALIDATION:
       return validateData(data, options);
-    
+
     case OperationTypes.CALCULATION:
       return performCalculation(data, options);
-    
+
     default:
       throw new Error(`Type de tâche non supporté: ${type}`);
   }
@@ -81,7 +82,7 @@ function processImageData(imageBuffer, options = {}) {
   // Traitement basique - dans une vraie implémentation, utiliser sharp ou jimp
   return {
     size: imageBuffer.length,
-    format: options.format || 'unknown',
+    format: options?.format || 'unknown',
     processed: true,
     timestamp: Date.now(),
   };
@@ -97,15 +98,15 @@ function encryptData(data, options = {}) {
   const algorithm = options.algorithm || 'aes-256-gcm';
   const key = options.key || crypto.randomBytes(32);
   const iv = crypto.randomBytes(16);
-  
+
   const cipher = crypto.createCipher(algorithm, key);
   cipher.setAAD(Buffer.from('discord-worker', 'utf8'));
-  
+
   let encrypted = cipher.update(data, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  
+
   const authTag = cipher.getAuthTag();
-  
+
   return {
     encrypted,
     iv: iv.toString('hex'),
@@ -121,20 +122,20 @@ function encryptData(data, options = {}) {
  * @returns {string} Données déchiffrées
  */
 function decryptData(encryptedData, options = {}) {
-  const { encrypted, iv, authTag, algorithm } = encryptedData;
+  const { encrypted, authTag, algorithm } = encryptedData;
   const key = options.key;
-  
+
   if (!key) {
     throw new Error('Clé de déchiffrement requise');
   }
-  
+
   const decipher = crypto.createDecipher(algorithm, key);
   decipher.setAAD(Buffer.from('discord-worker', 'utf8'));
   decipher.setAuthTag(Buffer.from(authTag, 'hex'));
-  
+
   let decrypted = decipher.update(encrypted, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
-  
+
   return decrypted;
 }
 
@@ -147,10 +148,10 @@ function decryptData(encryptedData, options = {}) {
 function compressData(data, options = {}) {
   const algorithm = options.algorithm || 'gzip';
   const level = options.level || 9;
-  
+
   return new Promise((resolve, reject) => {
     const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
-    
+
     if (algorithm === 'gzip') {
       zlib.gzip(buffer, { level }, (err, result) => {
         if (err) reject(err);
@@ -162,14 +163,18 @@ function compressData(data, options = {}) {
         else resolve(result);
       });
     } else if (algorithm === 'brotli') {
-      zlib.brotliCompress(buffer, {
-        params: {
-          [zlib.constants.BROTLI_PARAM_QUALITY]: level,
+      zlib.brotliCompress(
+        buffer,
+        {
+          params: {
+            [zlib.constants.BROTLI_PARAM_QUALITY]: level,
+          },
         },
-      }, (err, result) => {
-        if (err) reject(err);
-        else resolve(result);
-      });
+        (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        },
+      );
     } else {
       reject(new Error(`Algorithme de compression non supporté: ${algorithm}`));
     }
@@ -184,7 +189,7 @@ function compressData(data, options = {}) {
  */
 function decompressData(compressedData, options = {}) {
   const algorithm = options.algorithm || 'gzip';
-  
+
   return new Promise((resolve, reject) => {
     if (algorithm === 'gzip') {
       zlib.gunzip(compressedData, (err, result) => {
@@ -253,17 +258,17 @@ function validateData(data, options = {}) {
         result.valid = typeof data === 'string';
         if (!result.valid) result.errors.push('Expected string');
         break;
-      
+
       case 'number':
         result.valid = typeof data === 'number' && !isNaN(data);
         if (!result.valid) result.errors.push('Expected number');
         break;
-      
+
       case 'array':
         result.valid = Array.isArray(data);
         if (!result.valid) result.errors.push('Expected array');
         break;
-      
+
       case 'object':
         result.valid = typeof data === 'object' && data !== null && !Array.isArray(data);
         if (!result.valid) result.errors.push('Expected object');
@@ -293,30 +298,31 @@ function validateData(data, options = {}) {
  * @param {Object} options Options
  * @returns {*} Résultat du calcul
  */
-function performCalculation(data, options = {}) {
+function performCalculation(data) {
   const { operation, values } = data;
 
   switch (operation) {
     case 'sum':
       return values.reduce((a, b) => a + b, 0);
-    
+
     case 'average':
       return values.reduce((a, b) => a + b, 0) / values.length;
-    
+
     case 'min':
       return Math.min(...values);
-    
+
     case 'max':
       return Math.max(...values);
-    
-    case 'factorial':
-      const factorial = (n) => n <= 1 ? 1 : n * factorial(n - 1);
+
+    case 'factorial': {
+      const factorial = n => (n <= 1 ? 1 : n * factorial(n - 1));
       return factorial(values[0]);
-    
-    case 'fibonacci':
-      const fibonacci = (n) => n <= 1 ? n : fibonacci(n - 1) + fibonacci(n - 2);
+    }
+    case 'fibonacci': {
+      const fibonacci = n => (n <= 1 ? n : fibonacci(n - 1) + fibonacci(n - 2));
       return fibonacci(values[0]);
-    
+    }
+
     default:
       throw new Error(`Opération non supportée: ${operation}`);
   }
