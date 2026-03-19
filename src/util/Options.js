@@ -98,6 +98,10 @@ const Intents = require('./Intents');
  * @property {number} [waitGuildTimeout=15_000] Time in milliseconds that Clients with the GUILDS intent should wait for
  * missing guilds to be received before starting the bot. If not specified, the default is 15 seconds.
  * @property {SweeperOptions} [sweepers={}] Options for cache sweeping
+ * @property {number} [eventBatchSize=50] Maximum number of events to batch together for performance optimization
+ * @property {number} [eventFlushInterval=100] Time in milliseconds between automatic event batch flushes
+ * @property {number} [eventMaxBatchAge=50] Maximum age in milliseconds for an event batch before forced flush
+ * @property {boolean} [debug=false] Whether to enable debug logging for performance monitoring
  * @property {WebsocketOptions} [ws] Options for the WebSocket
  * @property {HTTPOptions} [http] HTTP options
  */
@@ -232,6 +236,11 @@ class Options extends null {
         template: 'https://discord.new',
         scheduledEvent: 'https://discord.com/events',
       },
+      // Options de performance pour l'EventBatcher
+      eventBatchSize: 50,
+      eventFlushInterval: 100,
+      eventMaxBatchAge: 50,
+      debug: false,
     };
   }
 

@@ -9,6 +9,7 @@ const WebSocketShard = require('./WebSocketShard');
 const PacketHandlers = require('./handlers');
 const { Error } = require('../../errors');
 const { Events, ShardEvents, Status, WSCodes, WSEvents } = require('../../util/Constants');
+const { EventBatcher } = require('../../util/EventBatcher');
 
 const BeforeReadyWhitelist = [
   WSEvents.READY,
@@ -44,6 +45,17 @@ class WebSocketManager extends EventEmitter {
      * @name WebSocketManager#client
      */
     Object.defineProperty(this, 'client', { value: client });
+
+    /**
+     * The event batcher for optimizing frequent event processing
+     * @type {EventBatcher}
+     * @private
+     */
+    this.eventBatcher = new EventBatcher(client, {
+      batchSize: client.options.eventBatchSize || 50,
+      flushInterval: client.options.eventFlushInterval || 100,
+      maxBatchAge: client.options.eventMaxBatchAge || 50,
+    });
 
     /**
      * The gateway this manager uses
@@ -315,6 +327,13 @@ class WebSocketManager extends EventEmitter {
     if (this.destroyed) return;
     this.debug(`Manager was destroyed. Called by:\n${new Error('MANAGER_DESTROYED').stack}`);
     this.destroyed = true;
+    
+    // Nettoyer l'EventBatcher
+    if (this.eventBatcher) {
+      this.eventBatcher.destroy();
+      this.eventBatcher = null;
+    }
+    
     this.shardQueue.clear();
     for (const shard of this.shards.values()) shard.destroy({ closeCode: 1_000, reset: true, emit: false, log: false });
   }
@@ -342,7 +361,13 @@ class WebSocketManager extends EventEmitter {
     }
 
     if (packet && PacketHandlers[packet.t]) {
-      PacketHandlers[packet.t](this.client, packet, shard);
+      // Utiliser l'EventBatcher pour optimiser les événements fréquents
+      const wasBatched = this.eventBatcher.addEvent(packet.t, packet.d, shard.id);
+      
+      if (!wasBatched) {
+        // L'événement n'a pas été batché, le traiter normalement
+        PacketHandlers[packet.t](this.client, packet, shard);
+      }
     } else if (packet) {
       /**
        * Emitted whenever a packet isn't handled.

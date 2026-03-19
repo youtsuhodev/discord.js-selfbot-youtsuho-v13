@@ -170,6 +170,12 @@ exports.WelcomeScreen = require('./structures/WelcomeScreen');
 
 exports.WebSocket = require('./WebSocket');
 
+exports.EventBatcher = require('./util/EventBatcher');
+exports.BatchEventHandler = require('./util/BatchEventHandler');
+
+exports.LazyManagerRegistry = require('./util/LazyManagerRegistry');
+exports.WorkerManager = require('./util/WorkerManager');
+
 exports.CustomStatus = require('./structures/Presence').CustomStatus;
 exports.RichPresence = require('./structures/Presence').RichPresence;
 exports.SpotifyRPC = require('./structures/Presence').SpotifyRPC;

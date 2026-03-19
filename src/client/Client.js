@@ -38,6 +38,8 @@ const DataResolver = require('../util/DataResolver');
 const Intents = require('../util/Intents');
 const DiscordAuthWebsocket = require('../util/RemoteAuth');
 const Sweepers = require('../util/Sweepers');
+const { LazyManagerRegistry } = require('../util/LazyManagerRegistry');
+const { WorkerManager } = require('../util/WorkerManager');
 
 /**
  * The main hub for interacting with the Discord API, and the starting point for any bot.
@@ -67,6 +69,20 @@ class Client extends BaseClient {
     this._finalizers = new FinalizationRegistry(this._finalize.bind(this));
 
     /**
+     * Lazy manager registry for performance optimization
+     * @type {LazyManagerRegistry}
+     * @private
+     */
+    this._managerRegistry = new LazyManagerRegistry(this);
+
+    /**
+     * Worker manager for CPU-intensive operations
+     * @type {WorkerManager}
+     * @private
+     */
+    this._workerManager = new WorkerManager(this);
+
+    /**
      * The WebSocket manager of the client
      * @type {WebSocketManager}
      */
@@ -91,6 +107,9 @@ class Client extends BaseClient {
      */
     this.voiceStates = new VoiceStateManager({ client: this });
 
+    // Enregistrer les managers pour lazy loading
+    this._registerLazyManagers();
+
     /**
      * Shard helpers for the client (only if the process was spawned from a {@link ShardingManager})
      * @type {?ShardClientUtil}
@@ -99,76 +118,8 @@ class Client extends BaseClient {
       ? ShardClientUtil.singleton(this, process.env.SHARDING_MANAGER_MODE)
       : null;
 
-    /**
-     * The user manager of this client
-     * @type {UserManager}
-     */
-    this.users = new UserManager(this);
-
-    /**
-     * A manager of all the guilds the client is currently handling -
-     * as long as sharding isn't being used, this will be *every* guild the bot is a member of
-     * @type {GuildManager}
-     */
-    this.guilds = new GuildManager(this);
-
-    /**
-     * All of the {@link Channel}s that the client is currently handling -
-     * as long as sharding isn't being used, this will be *every* channel in *every* guild the bot
-     * is a member of. Note that DM channels will not be initially cached, and thus not be present
-     * in the Manager without their explicit fetching or use.
-     * @type {ChannelManager}
-     */
-    this.channels = new ChannelManager(this);
-
-    /**
-     * The sweeping functions and their intervals used to periodically sweep caches
-     * @type {Sweepers}
-     */
-    this.sweepers = new Sweepers(this, this.options.sweepers);
-
-    /**
-     * The presence of the Client
-     * @private
-     * @type {ClientPresence}
-     */
-    this.presence = new ClientPresence(this, this.options.presence);
-
-    /**
-     * A manager of the presences belonging to this client
-     * @type {PresenceManager}
-     */
-    this.presences = new PresenceManager(this.client);
-
-    /**
-     * All of the note that have been cached at any point, mapped by their ids
-     * @type {UserManager}
-     */
-    this.notes = new UserNoteManager(this);
-
-    /**
-     * All of the relationships {@link User}
-     * @type {RelationshipManager}
-     */
-    this.relationships = new RelationshipManager(this);
-
-    /**
-     * Manages the API methods
-     * @type {BillingManager}
-     */
-    this.billing = new BillingManager(this);
-
-    /**
-     * All of the sessions of the client
-     * @type {SessionManager}
-     */
-    this.sessions = new SessionManager(this);
-
-    /**
-     * All of the settings {@link Object}
-     * @type {ClientUserSettingManager}
-     */
-    this.settings = new ClientUserSettingManager(this);
+    // Définir les getters lazy loading pour les managers
+    this._setupLazyManagerGetters();
 
     Object.defineProperty(this, 'token', { writable: true });
     if (!this.token && 'DISCORD_TOKEN' in process.env) {
@@ -354,7 +305,21 @@ class Client extends BaseClient {
 
     if (this.sweepMessageInterval) clearInterval(this.sweepMessageInterval);
 
-    this.sweepers.destroy();
+    // Nettoyer les managers lazy loading
+    if (this._managerRegistry) {
+      this._managerRegistry.destroy();
+    }
+
+    // Nettoyer les workers
+    if (this._workerManager) {
+      this._workerManager.destroy();
+    }
+
+    // Nettoyer les sweepers (si initialisés)
+    if (this._managerRegistry?.isInitialized('sweepers')) {
+      this.sweepers.destroy();
+    }
+
     this.ws.destroy();
     this.token = null;
   }
@@ -371,6 +336,76 @@ class Client extends BaseClient {
       },
     });
     return this.destroy();
+  }
+
+  /**
+   * Enregistre les managers pour le lazy loading
+   * @private
+   */
+  _registerLazyManagers() {
+    const registry = this._managerRegistry;
+
+    // Managers critiques (haute priorité)
+    registry.register('users', () => new UserManager(this), 10);
+    registry.register('guilds', () => new GuildManager(this), 10);
+    registry.register('channels', () => new ChannelManager(this), 10);
+
+    // Managers importants (priorité moyenne)
+    registry.register('presences', () => new PresenceManager(this), 7);
+    registry.register('relationships', () => new RelationshipManager(this), 7);
+    registry.register('sessions', () => new SessionManager(this), 7);
+
+    // Managers secondaires (basse priorité)
+    registry.register('notes', () => new UserNoteManager(this), 3);
+    registry.register('billing', () => new BillingManager(this), 3);
+    registry.register('settings', () => new ClientUserSettingManager(this), 3);
+    registry.register('sweepers', () => new Sweepers(this, this.options.sweepers), 3);
+
+    // Présence (toujours initialisée)
+    this.presence = new ClientPresence(this, this.options.presence);
+  }
+
+  /**
+   * Configure les getters lazy loading pour les managers
+   * @private
+   */
+  _setupLazyManagerGetters() {
+    const managers = [
+      'users', 'guilds', 'channels', 'presences', 
+      'relationships', 'sessions', 'notes', 'billing', 
+      'settings', 'sweepers'
+    ];
+
+    for (const managerName of managers) {
+      Object.defineProperty(this, managerName, {
+        get: () => this._managerRegistry.get(managerName),
+        configurable: true,
+        enumerable: true,
+      });
+    }
+  }
+
+  /**
+   * Exécute une opération CPU-intensive dans un worker thread
+   * @param {string} type Type d'opération
+   * @param {*} data Données à traiter
+   * @param {Object} [options] Options
+   * @returns {Promise<*>} Résultat de l'opération
+   */
+  async executeWorkerTask(type, data, options = {}) {
+    return this._workerManager.execute(type, data, options);
+  }
+
+  /**
+   * Retourne les statistiques de performance
+   * @returns {Object} Statistiques complètes
+   */
+  getPerformanceStats() {
+    return {
+      lazyManagers: this._managerRegistry.getStats(),
+      workers: this._workerManager.getStats(),
+      eventBatcher: this.ws?.eventBatcher?.getStats(),
+    };
   }
 
   /**
