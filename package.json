@@ -29,7 +29,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/3T6-dsc/discord.js-selfbot-youtsuho-v13.git"
+    "url": "https://github.com/youtsuhodev/discord.js-selfbot-youtsuho-v13.git"
   },
   "keywords": [
     "discord.js",
@@ -44,12 +44,12 @@
     "client",
     "discordapp"
   ],
-  "author": "Youtsuho (https://github.com/3T6-dsc)",
+  "author": "Youtsuho (https://github.com/youtsuhodev)",
   "license": "GNU General Public License v3.0",
   "bugs": {
-    "url": "https://github.com/3T6-dsc/discord.js-selfbot-youtsuho-v13/issues"
+    "url": "https://github.com/youtsuhodev/discord.js-selfbot-youtsuho-v13/issues"
   },
-  "homepage": "https://github.com/3T6-dsc/discord.js-selfbot-youtsuho-v13#readme",
+  "homepage": "https://github.com/youtsuhodev/discord.js-selfbot-youtsuho-v13#readme",
   "dependencies": {
     "@discordjs/builders": "^1.6.3",
     "@discordjs/collection": "^2.1.1",
