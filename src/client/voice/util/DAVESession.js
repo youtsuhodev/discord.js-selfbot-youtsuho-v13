@@ -125,7 +125,7 @@ class DAVESession extends EventEmitter {
       Array.from(connectedClients),
     );
     this.emit('debug', 'MLS proposals processed');
-    if (!commit) return;
+    if (!commit) return null;
     return welcome ? Buffer.concat([commit, welcome]) : commit;
   }
 
@@ -201,7 +201,9 @@ class DAVESession extends EventEmitter {
   destroy() {
     try {
       this.session?.reset();
-    } catch {}
+    } catch {
+      // Ignore
+    }
   }
 }
 

@@ -8,8 +8,6 @@ const { Error } = require('../../../errors');
 const { VoiceOpcodes } = require('../../../util/Constants');
 const DAVESession = require('../util/DAVESession');
 
-const MAX_SEQUENCE = 2 ** 16 - 1;
-
 class VoiceWebSocket extends EventEmitter {
   constructor(connection) {
     super();
@@ -122,7 +120,7 @@ class VoiceWebSocket extends EventEmitter {
       const buffer = Buffer.isBuffer(event.data) ? event.data : Buffer.from(event.data);
       return this.onBinaryMessage(buffer);
     }
-    if (typeof event.data !== 'string') return;
+    if (typeof event.data !== 'string') return false;
     try {
       return this.onPacket(WebSocket.unpack(event.data, 'json'));
     } catch (error) {
@@ -148,22 +146,26 @@ class VoiceWebSocket extends EventEmitter {
       } else if (this.daveSession && op === VoiceOpcodes.DAVE_MLS_ANNOUNCE_COMMIT_TRANSITION) {
         const { transitionId, success } = this.daveSession.processCommit(payload);
         if (success) {
-          if (transitionId === 0) this.emit('daveTransitioned', transitionId);
-          else
+          if (transitionId === 0) {
+            this.emit('daveTransitioned', transitionId);
+          } else {
             this.sendPacket({
               op: VoiceOpcodes.DAVE_TRANSITION_READY,
               d: { transition_id: transitionId },
             });
+          }
         }
       } else if (this.daveSession && op === VoiceOpcodes.DAVE_MLS_WELCOME) {
         const { transitionId, success } = this.daveSession.processWelcome(payload);
         if (success) {
-          if (transitionId === 0) this.emit('daveTransitioned', transitionId);
-          else
+          if (transitionId === 0) {
+            this.emit('daveTransitioned', transitionId);
+          } else {
             this.sendPacket({
               op: VoiceOpcodes.DAVE_TRANSITION_READY,
               d: { transition_id: transitionId },
             });
+          }
         }
       } else if (this.daveSession && op === VoiceOpcodes.DAVE_MLS_KEY_PACKAGE) {
         this.emit('debug', `[WS] Unexpected DAVE MLS key package from server`);
@@ -218,7 +220,7 @@ class VoiceWebSocket extends EventEmitter {
           for (const id of packet.d.user_ids) this.connectedClients.add(id);
         }
         break;
-      case VoiceOpcodes.CLIENT_DISCONNECT:
+      case VoiceOpcodes.CLIENT_DISCONNECT: {
         this.connectedClients.delete(packet.d.user_id);
         const streamInfo = this.connection.receiver && this.connection.receiver.packets.streams.get(packet.d.user_id);
         if (streamInfo) {
@@ -226,6 +228,7 @@ class VoiceWebSocket extends EventEmitter {
           streamInfo.stream.push(null);
         }
         break;
+      }
       case VoiceOpcodes.SPEAKING:
         this.emit('startSpeaking', packet.d);
         break;
@@ -235,11 +238,12 @@ class VoiceWebSocket extends EventEmitter {
       case VoiceOpcodes.DAVE_PREPARE_TRANSITION:
         if (this.daveSession) {
           const sendReady = this.daveSession.prepareTransition(packet.d);
-          if (sendReady)
+          if (sendReady) {
             this.sendPacket({
               op: VoiceOpcodes.DAVE_TRANSITION_READY,
               d: { transition_id: packet.d.transition_id },
             });
+          }
           if (packet.d.transition_id === 0) {
             this.emit('daveTransitioned', 0);
           }
@@ -263,11 +267,7 @@ class VoiceWebSocket extends EventEmitter {
   createDaveSession(protocolVersion) {
     if (protocolVersion === 0) return;
     this.destroySession();
-    const session = new DAVESession(
-      protocolVersion,
-      this.client.user.id,
-      this.connection.channel.id,
-    );
+    const session = new DAVESession(protocolVersion, this.client.user.id, this.connection.channel.id);
     session.on('debug', msg => this.emit('debug', `[DAVE] ${msg}`));
     session.on('keyPackage', keyPackage => {
       this.sendBinaryMessage(VoiceOpcodes.DAVE_MLS_KEY_PACKAGE, keyPackage);

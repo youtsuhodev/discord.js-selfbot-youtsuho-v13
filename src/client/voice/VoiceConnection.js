@@ -453,7 +453,9 @@ class VoiceConnection extends EventEmitter {
     this.connectTimeout = setTimeout(() => {
       this.emit(
         'debug',
-        `Timeout fired. Status: ${this.status}, Token: ${!!this.authentication.token}, Endpoint: ${this.authentication.endpoint}, SessionId: ${!!this.authentication.sessionId}, WS: ${!!this.sockets.ws}`,
+        `Timeout fired. Status: ${this.status}, Token: ${!!this.authentication.token}, Endpoint: ${
+          this.authentication.endpoint
+        }, SessionId: ${!!this.authentication.sessionId}, WS: ${!!this.sockets.ws}`,
       );
       this.authenticateFailed('VOICE_CONNECTION_TIMEOUT');
     }, 15_000).unref();
