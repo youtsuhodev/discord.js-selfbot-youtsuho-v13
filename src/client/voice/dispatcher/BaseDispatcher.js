@@ -389,7 +389,9 @@ class BaseDispatcher extends Writable {
       8,
       4,
     );
-    return Buffer.concat([rtpHeader, ...this._encrypt(buffer, rtpHeader)]);
+    const daveSession = this.player.voiceConnection.daveSession;
+    const audioData = daveSession ? daveSession.encrypt(buffer) : buffer;
+    return Buffer.concat([rtpHeader, ...this._encrypt(audioData, rtpHeader)]);
   }
 
   _sendPacket(packet) {

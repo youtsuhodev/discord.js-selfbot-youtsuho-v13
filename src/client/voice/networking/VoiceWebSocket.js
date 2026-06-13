@@ -1,42 +1,32 @@
 'use strict';
 
 const EventEmitter = require('events');
-const { setTimeout, setInterval } = require('node:timers');
+const { Buffer } = require('node:buffer');
+const { setTimeout, setInterval, clearInterval } = require('node:timers');
 const WebSocket = require('../../../WebSocket');
 const { Error } = require('../../../errors');
-const { Opcodes, VoiceOpcodes } = require('../../../util/Constants');
+const { VoiceOpcodes } = require('../../../util/Constants');
+const DAVESession = require('../util/DAVESession');
 
-/**
- * Represents a Voice Connection's WebSocket.
- * @extends {EventEmitter}
- * @private
- */
+const MAX_SEQUENCE = 2 ** 16 - 1;
+
 class VoiceWebSocket extends EventEmitter {
   constructor(connection) {
     super();
-    /**
-     * The Voice Connection that this WebSocket serves
-     * @type {VoiceConnection}
-     */
     this.connection = connection;
-
-    /**
-     * How many connection attempts have been made
-     * @type {number}
-     */
     this.attempts = 0;
-
     this._sequenceNumber = -1;
-
     this.dead = false;
+    this.heartbeatInterval = null;
+    this.lastHeartbeatAck = 0;
+    this.lastHeartbeatSend = 0;
+    this.missedHeartbeats = 0;
+    this.ping = undefined;
+    this.daveSession = null;
+    this.connectedClients = new Set();
     this.connection.on('closing', this.shutdown.bind(this));
   }
 
-  /**
-   * The client of this voice WebSocket
-   * @type {Client}
-   * @readonly
-   */
   get client() {
     return this.connection.client;
   }
@@ -44,12 +34,17 @@ class VoiceWebSocket extends EventEmitter {
   shutdown() {
     this.emit('debug', `[WS] shutdown requested`);
     this.dead = true;
+    this.destroySession();
     this.reset();
   }
 
-  /**
-   * Resets the current WebSocket.
-   */
+  destroySession() {
+    if (this.daveSession) {
+      this.daveSession.destroy();
+      this.daveSession = null;
+    }
+  }
+
   reset() {
     this.emit('debug', `[WS] reset requested`);
     if (this.ws) {
@@ -59,9 +54,6 @@ class VoiceWebSocket extends EventEmitter {
     this.clearHeartbeat();
   }
 
-  /**
-   * Starts connecting to the Voice WebSocket Server.
-   */
   connect() {
     this.emit('debug', `[WS] connect requested`);
     if (this.dead) return;
@@ -73,10 +65,6 @@ class VoiceWebSocket extends EventEmitter {
 
     this.attempts++;
 
-    /**
-     * The actual WebSocket used to connect to the Voice WebSocket Server.
-     * @type {WebSocket}
-     */
     this.ws = WebSocket.create(`wss://${this.connection.authentication.endpoint}/`, { v: 8 });
     this.emit('debug', `[WS] connecting, ${this.attempts} attempts, ${this.ws.url}`);
     this.ws.onopen = this.onOpen.bind(this);
@@ -85,11 +73,6 @@ class VoiceWebSocket extends EventEmitter {
     this.ws.onerror = this.onError.bind(this);
   }
 
-  /**
-   * Sends data to the WebSocket if it is open.
-   * @param {string} data The data to send to the WebSocket
-   * @returns {Promise<string>}
-   */
   send(data) {
     this.emit('debug', `[WS] >> ${data}`);
     return new Promise((resolve, reject) => {
@@ -101,42 +84,45 @@ class VoiceWebSocket extends EventEmitter {
     });
   }
 
-  /**
-   * JSON.stringify's a packet and then sends it to the WebSocket Server.
-   * @param {Object} packet The packet to send
-   * @returns {Promise<string>}
-   */
   async sendPacket(packet) {
     packet = JSON.stringify(packet);
     return this.send(packet);
   }
 
-  /**
-   * Called whenever the WebSocket opens.
-   */
+  sendBinaryMessage(opcode, payload) {
+    try {
+      const message = Buffer.concat([Buffer.from([opcode]), payload]);
+      this.emit('debug', `[WS] >> [bin] opcode ${opcode}, ${payload.byteLength} bytes`);
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) throw new Error('WS_NOT_OPEN');
+      this.ws.send(message);
+    } catch (error) {
+      this.emit('error', error);
+    }
+  }
+
   onOpen() {
     this.emit('debug', `[WS] opened at gateway ${this.connection.authentication.endpoint}`);
-    this.sendPacket({
-      op: Opcodes.DISPATCH,
+    const identifyPayload = {
+      op: VoiceOpcodes.IDENTIFY,
       d: {
         server_id: this.connection.serverId || this.connection.channel.guild?.id || this.connection.channel.id,
         user_id: this.client.user.id,
-        token: this.connection.authentication.token,
         session_id: this.connection.authentication.sessionId,
-        streams: [{ type: 'screen', rid: '100', quality: 100 }],
-        video: true,
+        token: this.connection.authentication.token,
+        max_dave_protocol_version: DAVESession.getMaxProtocolVersion(),
       },
-    }).catch(() => {
+    };
+    this.sendPacket(identifyPayload).catch(() => {
       this.emit('error', new Error('VOICE_JOIN_SOCKET_CLOSED'));
     });
   }
 
-  /**
-   * Called whenever a message is received from the WebSocket.
-   * @param {MessageEvent} event The message event that was received
-   * @returns {void}
-   */
   onMessage(event) {
+    if (event.data instanceof ArrayBuffer || event.data instanceof Buffer) {
+      const buffer = Buffer.isBuffer(event.data) ? event.data : Buffer.from(event.data);
+      return this.onBinaryMessage(buffer);
+    }
+    if (typeof event.data !== 'string') return;
     try {
       return this.onPacket(WebSocket.unpack(event.data, 'json'));
     } catch (error) {
@@ -144,28 +130,62 @@ class VoiceWebSocket extends EventEmitter {
     }
   }
 
-  /**
-   * Called whenever the connection to the WebSocket server is lost.
-   * @param {CloseEvent} event The WebSocket close event
-   */
+  onBinaryMessage(buffer) {
+    if (buffer.length < 3) return;
+    const seq = buffer.readUInt16BE(0);
+    const op = buffer.readUInt8(2);
+    const payload = buffer.subarray(3);
+
+    this._sequenceNumber = seq;
+    this.emit('debug', `[WS] << [bin] opcode ${op}, seq ${seq}, ${payload.byteLength} bytes`);
+
+    try {
+      if (this.daveSession && op === VoiceOpcodes.DAVE_MLS_EXTERNAL_SENDER) {
+        this.daveSession.setExternalSender(payload);
+      } else if (this.daveSession && op === VoiceOpcodes.DAVE_MLS_PROPOSALS) {
+        const result = this.daveSession.processProposals(payload, this.connectedClients);
+        if (result) this.sendBinaryMessage(VoiceOpcodes.DAVE_MLS_COMMIT_WELCOME, result);
+      } else if (this.daveSession && op === VoiceOpcodes.DAVE_MLS_ANNOUNCE_COMMIT_TRANSITION) {
+        const { transitionId, success } = this.daveSession.processCommit(payload);
+        if (success) {
+          if (transitionId === 0) this.emit('daveTransitioned', transitionId);
+          else
+            this.sendPacket({
+              op: VoiceOpcodes.DAVE_TRANSITION_READY,
+              d: { transition_id: transitionId },
+            });
+        }
+      } else if (this.daveSession && op === VoiceOpcodes.DAVE_MLS_WELCOME) {
+        const { transitionId, success } = this.daveSession.processWelcome(payload);
+        if (success) {
+          if (transitionId === 0) this.emit('daveTransitioned', transitionId);
+          else
+            this.sendPacket({
+              op: VoiceOpcodes.DAVE_TRANSITION_READY,
+              d: { transition_id: transitionId },
+            });
+        }
+      } else if (this.daveSession && op === VoiceOpcodes.DAVE_MLS_KEY_PACKAGE) {
+        this.emit('debug', `[WS] Unexpected DAVE MLS key package from server`);
+      } else {
+        this.emit('unknownPacket', { op, binary: true });
+      }
+    } catch (err) {
+      this.emit('debug', `[WS] Binary message error (op ${op}): ${err}`);
+    }
+  }
+
   onClose(event) {
     this.emit('debug', `[WS] closed with code ${event.code} and reason: ${event.reason}`);
+    this.destroySession();
     if (!this.dead) setTimeout(this.connect.bind(this), this.attempts * 1000).unref();
   }
 
-  /**
-   * Called whenever an error occurs with the WebSocket.
-   * @param {Error} error The error that occurred
-   */
   onError(error) {
     this.emit('debug', `[WS] Error: ${error}`);
     this.emit('error', error);
   }
 
-  /**
-   * Called whenever a valid packet is received from the WebSocket.
-   * @param {Object} packet The received packet
-   */
   onPacket(packet) {
     this.emit('debug', `[WS] << ${JSON.stringify(packet)}`);
     if (packet.seq) this._sequenceNumber = packet.seq;
@@ -174,32 +194,32 @@ class VoiceWebSocket extends EventEmitter {
         this.setHeartbeat(packet.d.heartbeat_interval);
         break;
       case VoiceOpcodes.READY:
-        /**
-         * Emitted once the voice WebSocket receives the ready packet.
-         * @param {Object} packet The received packet
-         * @event VoiceWebSocket#ready
-         */
         this.emit('ready', packet.d);
         this.connection.setVideoStatus(false);
         break;
-      /* eslint-disable no-case-declarations */
       case VoiceOpcodes.SESSION_DESCRIPTION:
         packet.d.secret_key = new Uint8Array(packet.d.secret_key);
-        /**
-         * Emitted once the Voice Websocket receives a description of this voice session.
-         * @param {Object} packet The received packet
-         * @event VoiceWebSocket#sessionDescription
-         */
+        if (packet.d.dave_protocol_version !== undefined) {
+          try {
+            this.createDaveSession(packet.d.dave_protocol_version);
+          } catch (err) {
+            this.emit('debug', `[WS] Failed to create DAVE session: ${err}`);
+          }
+        }
         this.emit('sessionDescription', packet.d);
         break;
-      case VoiceOpcodes.CLIENT_CONNECT:
-        this.connection.ssrcMap.set(+packet.d.audio_ssrc, {
-          userId: packet.d.user_id,
-          speaking: 0,
-          hasVideo: Boolean(packet.d.video_ssrc),
-        });
+      case VoiceOpcodes.HEARTBEAT_ACK:
+        this.lastHeartbeatAck = Date.now();
+        this.missedHeartbeats = 0;
+        this.ping = this.lastHeartbeatAck - this.lastHeartbeatSend;
+        break;
+      case VoiceOpcodes.CLIENTS_CONNECT:
+        if (packet.d.user_ids) {
+          for (const id of packet.d.user_ids) this.connectedClients.add(id);
+        }
         break;
       case VoiceOpcodes.CLIENT_DISCONNECT:
+        this.connectedClients.delete(packet.d.user_id);
         const streamInfo = this.connection.receiver && this.connection.receiver.packets.streams.get(packet.d.user_id);
         if (streamInfo) {
           this.connection.receiver.packets.streams.delete(packet.d.user_id);
@@ -207,56 +227,76 @@ class VoiceWebSocket extends EventEmitter {
         }
         break;
       case VoiceOpcodes.SPEAKING:
-        /**
-         * Emitted whenever a speaking packet is received.
-         * @param {Object} data
-         * @event VoiceWebSocket#startSpeaking
-         */
         this.emit('startSpeaking', packet.d);
         break;
       case VoiceOpcodes.SOURCES:
-        /**
-         * Emitted whenever a streaming packet is received.
-         * @param {Object} data
-         * @event VoiceWebSocket#startStreaming
-         */
         this.emit('startStreaming', packet.d);
         break;
+      case VoiceOpcodes.DAVE_PREPARE_TRANSITION:
+        if (this.daveSession) {
+          const sendReady = this.daveSession.prepareTransition(packet.d);
+          if (sendReady)
+            this.sendPacket({
+              op: VoiceOpcodes.DAVE_TRANSITION_READY,
+              d: { transition_id: packet.d.transition_id },
+            });
+          if (packet.d.transition_id === 0) {
+            this.emit('daveTransitioned', 0);
+          }
+        }
+        break;
+      case VoiceOpcodes.DAVE_EXECUTE_TRANSITION:
+        if (this.daveSession) {
+          const transitioned = this.daveSession.executeTransition(packet.d.transition_id);
+          if (transitioned) this.emit('daveTransitioned', packet.d.transition_id);
+        }
+        break;
+      case VoiceOpcodes.DAVE_PREPARE_EPOCH:
+        if (this.daveSession) this.daveSession.prepareEpoch(packet.d);
+        break;
       default:
-        /**
-         * Emitted when an unhandled packet is received.
-         * @param {Object} packet
-         * @event VoiceWebSocket#unknownPacket
-         */
         this.emit('unknownPacket', packet);
         break;
     }
   }
 
-  /**
-   * Sets an interval at which to send a heartbeat packet to the WebSocket.
-   * @param {number} interval The interval at which to send a heartbeat packet
-   */
+  createDaveSession(protocolVersion) {
+    if (protocolVersion === 0) return;
+    this.destroySession();
+    const session = new DAVESession(
+      protocolVersion,
+      this.client.user.id,
+      this.connection.channel.id,
+    );
+    session.on('debug', msg => this.emit('debug', `[DAVE] ${msg}`));
+    session.on('keyPackage', keyPackage => {
+      this.sendBinaryMessage(VoiceOpcodes.DAVE_MLS_KEY_PACKAGE, keyPackage);
+    });
+    session.on('invalidateTransition', transitionId => {
+      this.sendPacket({
+        op: VoiceOpcodes.DAVE_MLS_INVALID_COMMIT_WELCOME,
+        d: { transition_id: transitionId },
+      });
+    });
+    session.reinit();
+    this.daveSession = session;
+    this.emit('debug', `[DAVE] Created DAVE session for protocol version ${protocolVersion}`);
+  }
+
   setHeartbeat(interval) {
     if (!interval || isNaN(interval)) {
       this.onError(new Error('VOICE_INVALID_HEARTBEAT'));
       return;
     }
     if (this.heartbeatInterval) {
-      /**
-       * Emitted whenever the voice WebSocket encounters a non-fatal error.
-       * @param {string} warn The warning
-       * @event VoiceWebSocket#warn
-       */
       this.emit('warn', 'A voice heartbeat interval is being overwritten');
       clearInterval(this.heartbeatInterval);
     }
+    this.lastHeartbeatAck = Date.now();
+    this.lastHeartbeatSend = 0;
     this.heartbeatInterval = setInterval(this.sendHeartbeat.bind(this), interval).unref();
   }
 
-  /**
-   * Clears a heartbeat interval, if one exists.
-   */
   clearHeartbeat() {
     if (!this.heartbeatInterval) {
       this.emit('warn', 'Tried to clear a heartbeat interval that does not exist');
@@ -266,20 +306,34 @@ class VoiceWebSocket extends EventEmitter {
     this.heartbeatInterval = null;
   }
 
-  /**
-   * Sends a heartbeat packet.
-   */
   sendHeartbeat() {
+    if (this.lastHeartbeatSend !== 0 && this.missedHeartbeats >= 3) {
+      this.ws.close();
+      this.clearHeartbeat();
+      return;
+    }
+    this.lastHeartbeatSend = Date.now();
+    this.missedHeartbeats++;
     this.sendPacket({
       op: VoiceOpcodes.HEARTBEAT,
       d: {
-        t: Date.now(),
+        t: this.lastHeartbeatSend,
         seq_ack: this._sequenceNumber,
       },
     }).catch(() => {
       this.emit('warn', 'Tried to send heartbeat, but connection is not open');
       this.clearHeartbeat();
     });
+  }
+
+  encryptAudioPacket(packet) {
+    if (this.daveSession) return this.daveSession.encrypt(packet);
+    return packet;
+  }
+
+  decryptAudioPacket(packet, userId) {
+    if (this.daveSession) return this.daveSession.decrypt(packet, userId);
+    return packet;
   }
 }
 

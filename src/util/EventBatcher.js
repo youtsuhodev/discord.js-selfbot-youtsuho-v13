@@ -8,7 +8,6 @@ const { setTimeout } = require('node:timers');
 const BATCHABLE_EVENTS = new Set([
   'TYPING_START',
   'PRESENCE_UPDATE',
-  'VOICE_STATE_UPDATE',
   'GUILD_MEMBER_UPDATE',
   'MESSAGE_REACTION_ADD',
   'MESSAGE_REACTION_REMOVE',

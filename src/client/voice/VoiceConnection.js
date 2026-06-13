@@ -178,6 +178,15 @@ class VoiceConnection extends EventEmitter {
   }
 
   /**
+   * The DAVE session for this connection (E2EE)
+   * @type {?Object}
+   * @readonly
+   */
+  get daveSession() {
+    return this.sockets.ws?.daveSession || null;
+  }
+
+  /**
    * The current audio dispatcher (if any)
    * @type {?AudioDispatcher}
    * @readonly
@@ -441,7 +450,13 @@ class VoiceConnection extends EventEmitter {
    */
   authenticate(options = {}) {
     this.sendVoiceStateUpdate(options);
-    this.connectTimeout = setTimeout(() => this.authenticateFailed('VOICE_CONNECTION_TIMEOUT'), 15_000).unref();
+    this.connectTimeout = setTimeout(() => {
+      this.emit(
+        'debug',
+        `Timeout fired. Status: ${this.status}, Token: ${!!this.authentication.token}, Endpoint: ${this.authentication.endpoint}, SessionId: ${!!this.authentication.sessionId}, WS: ${!!this.sockets.ws}`,
+      );
+      this.authenticateFailed('VOICE_CONNECTION_TIMEOUT');
+    }, 15_000).unref();
   }
 
   /**
