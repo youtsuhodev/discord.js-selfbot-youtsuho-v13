@@ -1,6 +1,6 @@
 {
   "name": "discord.js-selfbot-youtsuho-v13",
-  "version": "3.7.2",
+  "version": "3.7.3",
   "description": "An unofficial discord.js fork for creating selfbots (maintained by Youtsuho)",
   "main": "./src/index.js",
   "types": "./typings/index.d.ts",
