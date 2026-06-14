@@ -1,6 +1,7 @@
 'use strict';
 
 const EventEmitter = require('events');
+const { Buffer } = require('node:buffer');
 const { getCiphers } = require('node:crypto');
 const { setTimeout } = require('node:timers');
 const { Collection } = require('@discordjs/collection');
@@ -17,10 +18,12 @@ const Speaking = require('../../util/Speaking');
 const Util = require('../../util/Util');
 
 // Workaround for Discord now requiring silence to be sent before being able to receive audio
-class SingleSilence extends Silence {
+// and to keep the voice connection alive when idle (speaking flag must remain active)
+const SILENCE_FRAME_OPUS = Buffer.from([0xf8, 0xff, 0xfe]);
+
+class ContinuousSilence extends Silence {
   _read() {
-    super._read();
-    this.push(null);
+    this.push(SILENCE_FRAME_OPUS);
   }
 }
 
@@ -604,9 +607,10 @@ class VoiceConnection extends EventEmitter {
     if (this.dispatcher || this.videoDispatcher) {
       ready();
     } else {
-      // This serves to provide support for voice receive, sending audio is required to receive it.
-      const dispatcher = this.playAudio(new SingleSilence(), { type: 'opus', volume: false });
-      dispatcher.once('finish', ready);
+      // Play continuous silence to keep the voice connection alive (speaking flag and audio packets)
+      // Discord disconnects idle connections that don't transmit audio
+      this.playAudio(new ContinuousSilence(), { type: 'opus', volume: false });
+      ready();
     }
   }
 
