@@ -361,11 +361,18 @@ class WebSocketManager extends EventEmitter {
     }
 
     if (packet && PacketHandlers[packet.t]) {
+      // Debug: trace les événements vocaux critiques
+      if (packet.t === 'VOICE_STATE_UPDATE' || packet.t === 'VOICE_SERVER_UPDATE') {
+        this.client.emit('debug', `[WS] handlePacket: ${packet.t} seq=${packet.s} status=${this.status}`);
+      }
       // Utiliser l'EventBatcher pour optimiser les événements fréquents
       const wasBatched = this.eventBatcher.addEvent(packet.t, packet.d, shard.id);
 
       if (!wasBatched) {
         // L'événement n'a pas été batché, le traiter normalement
+        if (packet.t === 'VOICE_STATE_UPDATE' || packet.t === 'VOICE_SERVER_UPDATE') {
+          this.client.emit('debug', `[WS] routing ${packet.t} to handler`);
+        }
         PacketHandlers[packet.t](this.client, packet, shard);
       }
     } else if (packet) {
