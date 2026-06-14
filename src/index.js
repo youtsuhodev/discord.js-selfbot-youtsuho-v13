@@ -1,12 +1,15 @@
 'use strict';
 
-// Message de bienvenue pour les utilisateurs
-console.log('\x1b[36m%s\x1b[0m', '╔══════════════════════════════════════════════════════════════╗');
-console.log('\x1b[36m%s\x1b[0m', '║           discord.js-selfbot-youtsuho-v13 chargé !           ║');
-console.log('\x1b[36m%s\x1b[0m', '╠══════════════════════════════════════════════════════════════╣');
-console.log('\x1b[33m%s\x1b[0m', '║  🐛 Si vous trouvez un bug, merci de le reporter sur :      ║');
-console.log('\x1b[33m%s\x1b[0m', '║  https://github.com/3T6-dsc/discord.js-selfbot-youtsuho-v13/issues ║');
-console.log('\x1b[36m%s\x1b[0m', '╚══════════════════════════════════════════════════════════════╝');
+// Startup message
+console.log('\x1b[36m%s\x1b[0m', '╔════════════════════════════════════════════════════════════════════════╗');
+console.log('\x1b[36m%s\x1b[0m', '║               discord.js-selfbot-youtsuho-v13 loaded!                  ║');
+console.log('\x1b[36m%s\x1b[0m', '╠════════════════════════════════════════════════════════════════════════╣');
+console.log('\x1b[33m%s\x1b[0m', '║  🐛 Found a bug? Report it at:                                         ║');
+console.log('\x1b[33m%s\x1b[0m', '║  https://github.com/youtsuhodev/discord.js-selfbot-youtsuho-v13/issues ║');
+console.log('\x1b[36m%s\x1b[0m', '╠════════════════════════════════════════════════════════════════════════╣');
+console.log('\x1b[32m%s\x1b[0m', '║  💬 Need help? Join the Discord support server:                        ║');
+console.log('\x1b[32m%s\x1b[0m', '║  https://discord.gg/7KjuRVkPEp                                         ║');
+console.log('\x1b[36m%s\x1b[0m', '╚════════════════════════════════════════════════════════════════════════╝');
 console.log('');
 
 // "Root" classes (starting points)
