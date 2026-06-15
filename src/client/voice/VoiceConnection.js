@@ -346,7 +346,7 @@ class VoiceConnection extends EventEmitter {
       return;
     }
 
-    endpoint = endpoint.match(/([^:]*)/)[0];
+    endpoint = endpoint.match(/([^:]*)(:\d+)?/)[0];
     this.emit('debug', `Endpoint resolved as ${endpoint}`);
 
     if (!endpoint) {

@@ -17,6 +17,7 @@ class VoiceWebSocket extends EventEmitter {
     this.dead = false;
     this.heartbeatInterval = null;
     this.lastHeartbeatAck = 0;
+    this.serverDaveVersion = 0;
     this.lastHeartbeatSend = 0;
     this.missedHeartbeats = 0;
     this.ping = undefined;
@@ -100,17 +101,17 @@ class VoiceWebSocket extends EventEmitter {
 
   onOpen() {
     this.emit('debug', `[WS] opened at gateway ${this.connection.authentication.endpoint}`);
-    const identifyPayload = {
-      op: VoiceOpcodes.IDENTIFY,
-      d: {
-        server_id: this.connection.serverId || this.connection.channel.guild?.id || this.connection.channel.id,
-        user_id: this.client.user.id,
-        session_id: this.connection.authentication.sessionId,
-        token: this.connection.authentication.token,
-        max_dave_protocol_version: DAVESession.getMaxProtocolVersion(),
-      },
+  }
+
+  sendIdentify() {
+    const d = {
+      server_id: this.connection.serverId || this.connection.channel.guild?.id || this.connection.channel.id,
+      user_id: this.client.user.id,
+      session_id: this.connection.authentication.sessionId,
+      token: this.connection.authentication.token,
+      max_dave_protocol_version: DAVESession.getMaxProtocolVersion(),
     };
-    this.sendPacket(identifyPayload).catch(() => {
+    this.sendPacket({ op: VoiceOpcodes.IDENTIFY, d }).catch(() => {
       this.emit('error', new Error('VOICE_JOIN_SOCKET_CLOSED'));
     });
   }
@@ -194,6 +195,10 @@ class VoiceWebSocket extends EventEmitter {
     switch (packet.op) {
       case VoiceOpcodes.HELLO:
         this.setHeartbeat(packet.d.heartbeat_interval);
+        if (packet.d.dave_protocol_version !== undefined) {
+          this.serverDaveVersion = packet.d.dave_protocol_version;
+        }
+        this.sendIdentify();
         break;
       case VoiceOpcodes.READY:
         this.emit('ready', packet.d);
