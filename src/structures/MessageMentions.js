@@ -167,8 +167,7 @@ class MessageMentions {
   get channels() {
     if (this._channels) return this._channels;
     this._channels = new Collection();
-    let matches;
-    while ((matches = this.constructor.CHANNELS_PATTERN.exec(this._content)) !== null) {
+    for (const matches of this._content.matchAll(this.constructor.CHANNELS_PATTERN)) {
       const chan = this.client.channels.cache.get(matches[1]);
       if (chan) this._channels.set(chan.id, chan);
     }
@@ -184,8 +183,7 @@ class MessageMentions {
   get parsedUsers() {
     if (this._parsedUsers) return this._parsedUsers;
     this._parsedUsers = new Collection();
-    let matches;
-    while ((matches = this.constructor.USERS_PATTERN.exec(this._content)) !== null) {
+    for (const matches of this._content.matchAll(this.constructor.USERS_PATTERN)) {
       const user = this.client.users.cache.get(matches[1]);
       if (user) this._parsedUsers.set(user.id, user);
     }

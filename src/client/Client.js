@@ -107,6 +107,13 @@ class Client extends BaseClient {
      */
     this.voiceStates = new VoiceStateManager({ client: this });
 
+    /**
+     * Cached emoji manager, lazily initialized
+     * @type {?BaseGuildEmojiManager}
+     * @private
+     */
+    this._emojisCache = null;
+
     // Enregistrer les managers pour lazy loading
     this._registerLazyManagers();
 
@@ -177,11 +184,21 @@ class Client extends BaseClient {
    * @readonly
    */
   get emojis() {
+    if (this._emojisCache) return this._emojisCache;
     const emojis = new BaseGuildEmojiManager(this);
     for (const guild of this.guilds.cache.values()) {
       if (guild.available) for (const emoji of guild.emojis.cache.values()) emojis.cache.set(emoji.id, emoji);
     }
+    this._emojisCache = emojis;
     return emojis;
+  }
+
+  /**
+   * Invalidates the cached emoji manager, forcing a rebuild on next access.
+   * @private
+   */
+  _invalidateEmojisCache() {
+    this._emojisCache = null;
   }
 
   /**
@@ -561,8 +578,8 @@ class Client extends BaseClient {
       if (message) {
         this.emit(Events.DEBUG, message);
       }
-    } catch {
-      this.emit(Events.DEBUG, `Garbage collection failed on ${name ?? 'an unknown item'}.`);
+    } catch (err) {
+      this.emit(Events.DEBUG, `Garbage collection failed on ${name ?? 'an unknown item'}: ${err.message}`);
     }
   }
 

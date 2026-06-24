@@ -1,6 +1,29 @@
 'use strict';
 
+const { ChannelTypes, ThreadChannelTypes, VoiceBasedChannelTypes } = require('./ChannelTypes');
+const { Events, ShardEvents } = require('./Events');
+const { WSCodes, Opcodes, VoiceOpcodes } = require('./Opcodes');
 const { Error, RangeError, TypeError } = require('../errors');
+
+// Re-exported from sub-modules
+exports.Events = Events;
+exports.ShardEvents = ShardEvents;
+exports.WSCodes = WSCodes;
+exports.Opcodes = Opcodes;
+exports.VoiceOpcodes = VoiceOpcodes;
+exports.ChannelTypes = ChannelTypes;
+exports.ThreadChannelTypes = ThreadChannelTypes;
+exports.VoiceBasedChannelTypes = VoiceBasedChannelTypes;
+exports.TextBasedChannelTypes = [
+  'DM',
+  'GUILD_TEXT',
+  'GUILD_NEWS',
+  'GUILD_NEWS_THREAD',
+  'GUILD_PUBLIC_THREAD',
+  'GUILD_PRIVATE_THREAD',
+  'GUILD_VOICE',
+];
+exports.ChannelTypesForVideo = ['GUILD_VOICE', 'GUILD_STAGE_VOICE'];
 
 /**
  * Max bulk deletable message age
@@ -34,27 +57,6 @@ exports.ciphers = [
   'AES128-SHA',
   'AES256-SHA',
 ];
-
-/**
- * The types of WebSocket error codes:
- * * 1000: WS_CLOSE_REQUESTED
- * * 1011: INTERNAL_ERROR
- * * 4004: TOKEN_INVALID
- * * 4010: SHARDING_INVALID
- * * 4011: SHARDING_REQUIRED
- * * 4013: INVALID_INTENTS
- * * 4014: DISALLOWED_INTENTS
- * @typedef {Object<number, string>} WSCodes
- */
-exports.WSCodes = {
-  1000: 'WS_CLOSE_REQUESTED',
-  1011: 'INTERNAL_ERROR',
-  4004: 'TOKEN_INVALID',
-  4010: 'SHARDING_INVALID',
-  4011: 'SHARDING_REQUIRED',
-  4013: 'INVALID_INTENTS',
-  4014: 'DISALLOWED_INTENTS',
-};
 
 const AllowedImageFormats = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
 
@@ -223,80 +225,6 @@ exports.VoiceStatus = {
  * * GUILD_SUBSCRIPTIONS_BULK: 37 => ~ Opcode 14
  * @typedef {Object<string, number>} Opcodes
  */
-exports.Opcodes = {
-  DISPATCH: 0,
-  HEARTBEAT: 1,
-  IDENTIFY: 2,
-  STATUS_UPDATE: 3,
-  VOICE_STATE_UPDATE: 4,
-  VOICE_GUILD_PING: 5,
-  RESUME: 6,
-  RECONNECT: 7,
-  REQUEST_GUILD_MEMBERS: 8,
-  INVALID_SESSION: 9,
-  HELLO: 10,
-  HEARTBEAT_ACK: 11,
-  GUILD_SYNC: 12,
-  DM_UPDATE: 13,
-  GUILD_SUBSCRIPTIONS: 14,
-  LOBBY_CONNECT: 15,
-  LOBBY_DISCONNECT: 16,
-  LOBBY_VOICE_STATE_UPDATE: 17,
-  STREAM_CREATE: 18,
-  STREAM_DELETE: 19,
-  STREAM_WATCH: 20,
-  STREAM_PING: 21,
-  STREAM_SET_PAUSED: 22,
-  REQUEST_GUILD_APPLICATION_COMMANDS: 24,
-  EMBEDDED_ACTIVITY_LAUNCH: 25,
-  EMBEDDED_ACTIVITY_CLOSE: 26,
-  EMBEDDED_ACTIVITY_UPDATE: 27,
-  REQUEST_FORUM_UNREADS: 28, // Payload: { guild_id: Snowflake, channel_id: Snowflake, threads: { thread_id: Snowflake, ack_message_id: Snowflake }[] }
-  REMOTE_COMMAND: 29, // Payload: { target_session_id: string, payload: any }
-  GET_DELETED_ENTITY_IDS_NOT_MATCHING_HASH: 30, // Payload: { guild_id: Snowflake, channel_ids_hash: string[], role_ids_hash: string[], emoji_ids_hash: string[], sticker_ids_hash: string[] }
-  REQUEST_SOUNDBOARD_SOUNDS: 31, // Payload: { guild_ids: string[] }
-  SPEED_TEST_CREATE: 32, // Payload: { preferred_region: string }
-  SPEED_TEST_DELETE: 33, // Payload: null
-  REQUEST_LAST_MESSAGES: 34, // Payload: { guild_id: string, channel_ids: string[] }
-  SEARCH_RECENT_MEMBERS: 35, // Payload: { guild_id: string, query: string, continuation_token?: Snowflake }
-  REQUEST_CHANNEL_STATUSES: 36, // Payload: { guild_id: string } | Response: CHANNEL_STATUSES | { guild_id, channels: { status, id }[] }
-  GUILD_SUBSCRIPTIONS_BULK: 37, // Payload: { subscriptions: Object<guild_id, { Payload_op14 - guild_id }> } | Response: Opcode 14
-  // Updated: 23/1/2024
-};
-
-/**
- * @typedef {Opject<string, number>} VoiceOpcodes
- */
-exports.VoiceOpcodes = {
-  IDENTIFY: 0,
-  SELECT_PROTOCOL: 1,
-  READY: 2,
-  HEARTBEAT: 3,
-  SESSION_DESCRIPTION: 4,
-  SPEAKING: 5,
-  HEARTBEAT_ACK: 6,
-  RESUME: 7,
-  HELLO: 8,
-  RESUMED: 9,
-  CLIENTS_CONNECT: 11,
-  SOURCES: 12,
-  CLIENT_DISCONNECT: 13,
-  SESSION_UPDATE: 14,
-  MEDIA_SINK_WANTS: 15,
-  VOICE_BACKEND_VERSION: 16,
-  CHANNEL_OPTIONS_UPDATE: 17,
-  DAVE_PREPARE_TRANSITION: 21,
-  DAVE_EXECUTE_TRANSITION: 22,
-  DAVE_TRANSITION_READY: 23,
-  DAVE_PREPARE_EPOCH: 24,
-  DAVE_MLS_EXTERNAL_SENDER: 25,
-  DAVE_MLS_KEY_PACKAGE: 26,
-  DAVE_MLS_PROPOSALS: 27,
-  DAVE_MLS_COMMIT_WELCOME: 28,
-  DAVE_MLS_ANNOUNCE_COMMIT_TRANSITION: 29,
-  DAVE_MLS_WELCOME: 30,
-  DAVE_MLS_INVALID_COMMIT_WELCOME: 31,
-};
 
 /**
  * The types of events emitted by the Client:
@@ -394,124 +322,6 @@ exports.VoiceOpcodes = {
  * * VOICE_CHANNEL_EFFECT_SEND: voiceChannelEffectSend
  * @typedef {Object<string, string>} Events
  */
-exports.Events = {
-  RATE_LIMIT: 'rateLimit',
-  INVALID_REQUEST_WARNING: 'invalidRequestWarning',
-  API_RESPONSE: 'apiResponse',
-  API_REQUEST: 'apiRequest',
-  CLIENT_READY: 'ready',
-  APPLICATION_COMMAND_CREATE: 'applicationCommandCreate',
-  APPLICATION_COMMAND_DELETE: 'applicationCommandDelete',
-  APPLICATION_COMMAND_UPDATE: 'applicationCommandUpdate',
-  APPLICATION_COMMAND_PERMISSIONS_UPDATE: 'applicationCommandPermissionsUpdate',
-  AUTO_MODERATION_ACTION_EXECUTION: 'autoModerationActionExecution',
-  AUTO_MODERATION_RULE_CREATE: 'autoModerationRuleCreate',
-  AUTO_MODERATION_RULE_DELETE: 'autoModerationRuleDelete',
-  AUTO_MODERATION_RULE_UPDATE: 'autoModerationRuleUpdate',
-  GUILD_AVAILABLE: 'guildAvailable',
-  GUILD_CREATE: 'guildCreate',
-  GUILD_DELETE: 'guildDelete',
-  GUILD_UPDATE: 'guildUpdate',
-  GUILD_UNAVAILABLE: 'guildUnavailable',
-  GUILD_MEMBER_ADD: 'guildMemberAdd',
-  GUILD_MEMBER_REMOVE: 'guildMemberRemove',
-  GUILD_MEMBER_UPDATE: 'guildMemberUpdate',
-  GUILD_MEMBER_AVAILABLE: 'guildMemberAvailable',
-  GUILD_MEMBERS_CHUNK: 'guildMembersChunk',
-  GUILD_INTEGRATIONS_UPDATE: 'guildIntegrationsUpdate',
-  GUILD_ROLE_CREATE: 'roleCreate',
-  GUILD_ROLE_DELETE: 'roleDelete',
-  INVITE_CREATE: 'inviteCreate',
-  INVITE_DELETE: 'inviteDelete',
-  GUILD_ROLE_UPDATE: 'roleUpdate',
-  GUILD_EMOJI_CREATE: 'emojiCreate',
-  GUILD_EMOJI_DELETE: 'emojiDelete',
-  GUILD_EMOJI_UPDATE: 'emojiUpdate',
-  GUILD_BAN_ADD: 'guildBanAdd',
-  GUILD_BAN_REMOVE: 'guildBanRemove',
-  CHANNEL_CREATE: 'channelCreate',
-  CHANNEL_DELETE: 'channelDelete',
-  CHANNEL_UPDATE: 'channelUpdate',
-  CHANNEL_PINS_UPDATE: 'channelPinsUpdate',
-  MESSAGE_CREATE: 'messageCreate',
-  MESSAGE_DELETE: 'messageDelete',
-  MESSAGE_UPDATE: 'messageUpdate',
-  MESSAGE_BULK_DELETE: 'messageDeleteBulk',
-  MESSAGE_REACTION_ADD: 'messageReactionAdd',
-  MESSAGE_REACTION_REMOVE: 'messageReactionRemove',
-  MESSAGE_REACTION_REMOVE_ALL: 'messageReactionRemoveAll',
-  MESSAGE_REACTION_REMOVE_EMOJI: 'messageReactionRemoveEmoji',
-  THREAD_CREATE: 'threadCreate',
-  THREAD_DELETE: 'threadDelete',
-  THREAD_UPDATE: 'threadUpdate',
-  THREAD_LIST_SYNC: 'threadListSync',
-  THREAD_MEMBER_UPDATE: 'threadMemberUpdate',
-  THREAD_MEMBERS_UPDATE: 'threadMembersUpdate',
-  USER_UPDATE: 'userUpdate',
-  PRESENCE_UPDATE: 'presenceUpdate',
-  VOICE_SERVER_UPDATE: 'voiceServerUpdate',
-  VOICE_STATE_UPDATE: 'voiceStateUpdate',
-  TYPING_START: 'typingStart',
-  WEBHOOKS_UPDATE: 'webhookUpdate',
-  ERROR: 'error',
-  WARN: 'warn',
-  DEBUG: 'debug',
-  CACHE_SWEEP: 'cacheSweep',
-  SHARD_DISCONNECT: 'shardDisconnect',
-  SHARD_ERROR: 'shardError',
-  SHARD_RECONNECTING: 'shardReconnecting',
-  SHARD_READY: 'shardReady',
-  SHARD_RESUME: 'shardResume',
-  INVALIDATED: 'invalidated',
-  RAW: 'raw',
-  STAGE_INSTANCE_CREATE: 'stageInstanceCreate',
-  STAGE_INSTANCE_UPDATE: 'stageInstanceUpdate',
-  STAGE_INSTANCE_DELETE: 'stageInstanceDelete',
-  GUILD_STICKER_CREATE: 'stickerCreate',
-  GUILD_STICKER_DELETE: 'stickerDelete',
-  GUILD_STICKER_UPDATE: 'stickerUpdate',
-  GUILD_SCHEDULED_EVENT_CREATE: 'guildScheduledEventCreate',
-  GUILD_SCHEDULED_EVENT_UPDATE: 'guildScheduledEventUpdate',
-  GUILD_SCHEDULED_EVENT_DELETE: 'guildScheduledEventDelete',
-  GUILD_SCHEDULED_EVENT_USER_ADD: 'guildScheduledEventUserAdd',
-  GUILD_SCHEDULED_EVENT_USER_REMOVE: 'guildScheduledEventUserRemove',
-  GUILD_AUDIT_LOG_ENTRY_CREATE: 'guildAuditLogEntryCreate',
-  UNHANDLED_PACKET: 'unhandledPacket',
-  RELATIONSHIP_ADD: 'relationshipAdd',
-  RELATIONSHIP_UPDATE: 'relationshipUpdate',
-  RELATIONSHIP_REMOVE: 'relationshipRemove',
-  CHANNEL_RECIPIENT_ADD: 'channelRecipientAdd',
-  CHANNEL_RECIPIENT_REMOVE: 'channelRecipientRemove',
-  INTERACTION_MODAL_CREATE: 'interactionModalCreate',
-  CALL_CREATE: 'callCreate',
-  CALL_UPDATE: 'callUpdate',
-  CALL_DELETE: 'callDelete',
-  MESSAGE_POLL_VOTE_ADD: 'messagePollVoteAdd',
-  MESSAGE_POLL_VOTE_REMOVE: 'messagePollVoteRemove',
-  VOICE_CHANNEL_EFFECT_SEND: 'voiceChannelEffectSend',
-  // Djs v12
-  VOICE_BROADCAST_SUBSCRIBE: 'subscribe',
-  VOICE_BROADCAST_UNSUBSCRIBE: 'unsubscribe',
-};
-
-/**
- * The types of events emitted by a Shard:
- * * CLOSE: close
- * * DESTROYED: destroyed
- * * INVALID_SESSION: invalidSession
- * * READY: ready
- * * RESUMED: resumed
- * * ALL_READY: allReady
- * @typedef {Object<string, string>} ShardEvents
- */
-exports.ShardEvents = {
-  CLOSE: 'close',
-  DESTROYED: 'destroyed',
-  INVALID_SESSION: 'invalidSession',
-  READY: 'ready',
-  RESUMED: 'resumed',
-  ALL_READY: 'allReady',
-};
 
 /**
  * The type of Structure allowed to be a partial:
@@ -901,83 +711,6 @@ exports.ActivityTypes = createEnum(['PLAYING', 'STREAMING', 'LISTENING', 'WATCHI
  * @typedef {string} ChannelType
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
  */
-exports.ChannelTypes = createEnum([
-  'GUILD_TEXT',
-  'DM',
-  'GUILD_VOICE',
-  'GROUP_DM',
-  'GUILD_CATEGORY',
-  'GUILD_NEWS',
-  'GUILD_STORE',
-  ...Array(3).fill(null),
-  // 10
-  'GUILD_NEWS_THREAD',
-  'GUILD_PUBLIC_THREAD',
-  'GUILD_PRIVATE_THREAD',
-  'GUILD_STAGE_VOICE',
-  'GUILD_DIRECTORY',
-  'GUILD_FORUM',
-  'GUILD_MEDIA',
-]);
-
-/**
- * The channels that are text-based.
- * * DMChannel
- * * TextChannel
- * * NewsChannel
- * * ThreadChannel
- * * VoiceChannel
- * * StageChannel
- * @typedef {DMChannel|TextChannel|NewsChannel|ThreadChannel|VoiceChannel|StageChannel} TextBasedChannels
- */
-
-/**
- * Data that resolves to give a text-based channel. This can be:
- * * A text-based channel
- * * A snowflake
- * @typedef {TextBasedChannels|Snowflake} TextBasedChannelsResolvable
- */
-
-/**
- * The types of channels that are text-based. The available types are:
- * * DM
- * * GUILD_TEXT
- * * GUILD_NEWS
- * * GUILD_NEWS_THREAD
- * * GUILD_PUBLIC_THREAD
- * * GUILD_PRIVATE_THREAD
- * * GUILD_VOICE
- * * GUILD_STAGE_VOICE
- * @typedef {string} TextBasedChannelTypes
- */
-exports.TextBasedChannelTypes = [
-  'DM',
-  'GUILD_TEXT',
-  'GUILD_NEWS',
-  'GUILD_NEWS_THREAD',
-  'GUILD_PUBLIC_THREAD',
-  'GUILD_PRIVATE_THREAD',
-  'GUILD_VOICE',
-  'GUILD_STAGE_VOICE',
-];
-
-/**
- * The types of channels that are threads. The available types are:
- * * GUILD_NEWS_THREAD
- * * GUILD_PUBLIC_THREAD
- * * GUILD_PRIVATE_THREAD
- * @typedef {string} ThreadChannelTypes
- */
-exports.ThreadChannelTypes = ['GUILD_NEWS_THREAD', 'GUILD_PUBLIC_THREAD', 'GUILD_PRIVATE_THREAD'];
-
-/**
- * The types of channels that are voice-based. The available types are:
- * * GUILD_VOICE
- * * GUILD_STAGE_VOICE
- * @typedef {string} VoiceBasedChannelTypes
- */
-exports.VoiceBasedChannelTypes = ['GUILD_VOICE', 'GUILD_STAGE_VOICE'];
-
 /**
  * The types of assets of an application:
  * * SMALL: 1

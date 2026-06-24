@@ -318,7 +318,8 @@ class DiscordAuthWebsocket extends EventEmitter {
     if (!this.#fingerprint) return;
     require('qrcode').toString(this.AuthURL, { type: 'utf8', errorCorrectionLevel: 'L' }, (err, url) => {
       if (err) {
-        //
+        console.error('Failed to generate QR code:', err.message);
+        return;
       }
       console.log(url);
     });

@@ -1,5 +1,15 @@
 'use strict';
 
+const process = require('node:process');
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason?.stack ?? reason);
+});
+
+process.on('uncaughtException', error => {
+  console.error('Uncaught Exception:', error?.stack ?? error);
+});
+
 // Startup message
 console.log('\x1b[36m%s\x1b[0m', '╔════════════════════════════════════════════════════════════════════════╗');
 console.log('\x1b[36m%s\x1b[0m', '║               discord.js-selfbot-youtsuho-v13 loaded!                  ║');

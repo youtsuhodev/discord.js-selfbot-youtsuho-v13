@@ -855,8 +855,8 @@ class Util extends null {
     if (!files.length) return [];
     files = files.map((file, i) => ({
       filename: file.name,
-      // 25MB = 26_214_400bytes
-      file_size: Math.floor((26_214_400 / 10) * Math.random()),
+      // 25MB = 26_214_400bytes; use actual file size
+      file_size: file.byteLength ?? file.size ?? 0,
       id: `${i}`,
     }));
     const { attachments } = await client.api.channels[channelId].attachments.post({
