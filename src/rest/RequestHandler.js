@@ -206,8 +206,10 @@ class RequestHandler {
     // Perform the request
     let res;
     try {
+      if (!this.manager.client.token) throw new Error('TOKEN_MISSING');
       res = await request.make(captchaKey, captchaToken);
     } catch (error) {
+      if (error.message === 'TOKEN_MISSING') throw error;
       // Retry the specified number of times for request abortions
       if (request.retries === this.manager.client.options.retryLimit) {
         throw new HTTPError(error.message, error.constructor.name, error.status, request);
@@ -394,9 +396,6 @@ class RequestHandler {
     rqToken : ${data.captcha_rqtoken}`,
           );
           request.retries++;
-          if (data.captcha_rqdata) {
-            request.options.data = { ...request.options.data, captcha_rqdata: data.captcha_rqdata };
-          }
           return this.execute(request, captchaKey, data.captcha_rqtoken);
         }
         // Two factor handling
