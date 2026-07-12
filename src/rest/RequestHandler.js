@@ -373,7 +373,10 @@ class RequestHandler {
     rqToken : ${data.captcha_rqtoken}`,
           );
           const captchaResult = await this.manager.client.options.captchaSolver(data, request.fullUserAgent);
-          const captchaKey = typeof captchaResult === 'string' ? captchaResult : captchaResult?.data ?? captchaResult?.token ?? captchaResult?.key ?? captchaResult;
+          const captchaKey =
+            typeof captchaResult === 'string'
+              ? captchaResult
+              : captchaResult?.data ?? captchaResult?.token ?? captchaResult?.key ?? captchaResult;
           if (typeof captchaKey !== 'string') {
             this.manager.client.emit(
               DEBUG,
