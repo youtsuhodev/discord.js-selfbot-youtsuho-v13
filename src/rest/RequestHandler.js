@@ -372,18 +372,29 @@ class RequestHandler {
     Sitekey : ${data.captcha_sitekey}
     rqToken : ${data.captcha_rqtoken}`,
           );
-          const captcha = await this.manager.client.options.captchaSolver(data, request.fullUserAgent);
+          const captchaResult = await this.manager.client.options.captchaSolver(data, request.fullUserAgent);
+          const captchaKey = typeof captchaResult === 'string' ? captchaResult : captchaResult?.data ?? captchaResult?.token ?? captchaResult?.key ?? captchaResult;
+          if (typeof captchaKey !== 'string') {
+            this.manager.client.emit(
+              DEBUG,
+              `[Request Handler] Captcha solver returned an invalid format (expected string, got ${typeof captchaResult})`,
+            );
+            throw new DiscordAPIError(data, res.status, request);
+          }
           this.manager.client.emit(
             DEBUG,
             `[Request Handler] Captcha details:
     Method  : ${request.method}
     Path    : ${request.path}
     Route   : ${request.route}
-    Key     : ${captcha ? `${captcha.slice(0, 120)}...` : '[Captcha not solved]'}
+    Key     : ${captchaKey ? `${captchaKey.slice(0, 120)}...` : '[Captcha not solved]'}
     rqToken : ${data.captcha_rqtoken}`,
           );
           request.retries++;
-          return this.execute(request, captcha, data.captcha_rqtoken);
+          if (data.captcha_rqdata) {
+            request.options.data = { ...request.options.data, captcha_rqdata: data.captcha_rqdata };
+          }
+          return this.execute(request, captchaKey, data.captcha_rqtoken);
         }
         // Two factor handling
         if (data?.code && data.code == 60003 && request.options.auth !== false && request.retries < 1) {
