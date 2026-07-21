@@ -366,6 +366,7 @@ class WebSocketManager extends EventEmitter {
         this.client.emit('debug', `[WS] handlePacket: ${packet.t} seq=${packet.s} status=${this.status}`);
       }
       // Utiliser l'EventBatcher pour optimiser les événements fréquents
+      if (!this.eventBatcher) return true;
       const wasBatched = this.eventBatcher.addEvent(packet.t, packet.d, shard.id);
 
       if (!wasBatched) {
