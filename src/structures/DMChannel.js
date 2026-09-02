@@ -158,6 +158,16 @@ class DMChannel extends Channel {
   }
 
   /**
+   * Stop ringing the user's phone / PC (call)
+   * @returns {Promise<void>}
+   */
+  stopRinging() {
+    return this.client.api.channels(this.id).call['stop-ringing'].post({
+      data: {},
+    });
+  }
+
+  /**
    * The user in this voice-based channel
    * @type {Collection<Snowflake, User>}
    * @readonly

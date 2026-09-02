@@ -315,6 +315,16 @@ class GroupDMChannel extends Channel {
   }
 
   /**
+   * Stop ringing the user's phone / PC (call)
+   * @returns {Promise<void>}
+   */
+  stopRinging() {
+    return this.client.api.channels(this.id).call['stop-ringing'].post({
+      data: {},
+    });
+  }
+
+  /**
    * Sync VoiceState of this Group DMChannel.
    * @returns {undefined}
    */
