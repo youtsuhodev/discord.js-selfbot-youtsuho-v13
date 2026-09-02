@@ -824,23 +824,26 @@ class WebSocketShard extends EventEmitter {
     );
     // Step 1: Close the WebSocket connection, if any, otherwise, emit DESTROYED
     if (this.connection) {
+      // Snapshot the connection, as calling close() can synchronously trigger onClose,
+      // which re-enters destroy() and nulls this.connection.
+      const connection = this.connection;
       // If the connection is currently opened, we will (hopefully) receive close
-      if (this.connection.readyState === WebSocket.OPEN) {
-        this.connection.close(closeCode);
-        this.debug(`[WebSocket] Close: Tried closing. | WS State: ${CONNECTION_STATE[this.connection.readyState]}`);
+      if (connection.readyState === WebSocket.OPEN) {
+        connection.close(closeCode);
+        this.debug(`[WebSocket] Close: Tried closing. | WS State: ${CONNECTION_STATE[connection.readyState]}`);
       } else {
         // Connection is not OPEN
-        this.debug(`WS State: ${CONNECTION_STATE[this.connection.readyState]}`);
+        this.debug(`WS State: ${CONNECTION_STATE[connection.readyState]}`);
         // Attempt to close the connection just in case
         try {
-          this.connection.close(closeCode);
+          connection.close(closeCode);
         } catch (err) {
           this.debug(
             `[WebSocket] Close: Something went wrong while closing the WebSocket: ${
               err.message || err
-            }. Forcefully terminating the connection | WS State: ${CONNECTION_STATE[this.connection.readyState]}`,
+            }. Forcefully terminating the connection | WS State: ${CONNECTION_STATE[connection.readyState]}`,
           );
-          this.connection.terminate();
+          connection.terminate();
         }
         // Emit the destroyed event if needed
         if (emit) this._emitDestroyed();
