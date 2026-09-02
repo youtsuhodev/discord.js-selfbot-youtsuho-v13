@@ -529,6 +529,176 @@ export class RESTManager {
   public readonly cdn: unknown;
 }
 
+// Missing partial types
+export type PartialUser = { id: Snowflake; bot?: boolean; username?: string };
+export type PartialMessage = { id: Snowflake; channelId: Snowflake; guildId?: Snowflake | null };
+export type PartialGuildMember = { id: Snowflake; guild: Guild };
+export type PartialVoiceState = { id: Snowflake | null; channelId: Snowflake | null };
+export type PartialGroupDMChannel = { id: Snowflake };
+
+// REST event payloads
+export interface RateLimitData {
+  timeout: number;
+  limit: number;
+  method: string;
+  path: string;
+  route: string;
+  global: boolean;
+}
+export interface APIRequest {
+  method: string;
+  path: string;
+  route: string;
+  options: unknown;
+  retries: number;
+}
+export interface InvalidRequestWarningData {
+  count: number;
+  remainingTime: number;
+}
+export interface ApplicationCommandPermissionsUpdateData {
+  id: Snowflake;
+  guildId: Snowflake;
+  applicationId: Snowflake;
+  permissions: APIApplicationCommandPermission[];
+}
+export interface AutoModerationRule {
+  id: Snowflake;
+  guild: Guild;
+  creatorId: Snowflake | null;
+  name: string;
+  eventType: AutoModerationRuleEventTypes;
+  triggerType: AutoModerationRuleTriggerTypes;
+  triggerMetadata: unknown;
+  actions: unknown[];
+  enabled: boolean;
+  exemptRoles: Collection<Snowflake, Role>;
+  exemptChannels: Collection<Snowflake, Channel>;
+}
+export interface AutoModerationActionExecution {
+  guild: Guild;
+  action: unknown;
+  ruleId: Snowflake;
+  ruleTriggerType: AutoModerationRuleTriggerTypes;
+  userId: Snowflake;
+  channelId: Snowflake | null;
+  messageId: Snowflake | null;
+  alertSystemMessageId: Snowflake | null;
+  content: string;
+  matchedKeyword: Snowflake | null;
+  matchedContent: Snowflake | null;
+}
+
+export type BaseClientEvents = {
+  ready: [Client];
+  error: [Error];
+  warn: [string];
+  debug: [string];
+  invalidated: [];
+  rateLimit: [RateLimitData];
+  apiRequest: [APIRequest];
+  apiResponse: [APIRequest, Response];
+  invalidRequestWarning: [InvalidRequestWarningData];
+};
+
+export type ClientEvents = BaseClientEvents & {
+  applicationCommandCreate: [ApplicationCommand];
+  applicationCommandDelete: [ApplicationCommand];
+  applicationCommandUpdate: [ApplicationCommand, ApplicationCommand];
+  applicationCommandPermissionsUpdate: [ApplicationCommandPermissionsUpdateData];
+  autoModerationActionExecution: [AutoModerationActionExecution];
+  autoModerationRuleCreate: [AutoModerationRule];
+  autoModerationRuleDelete: [AutoModerationRule];
+  autoModerationRuleUpdate: [AutoModerationRule, AutoModerationRule];
+  cacheSweep: [string];
+  callCreate: [CallState];
+  callUpdate: [CallState];
+  callDelete: [CallState];
+  channelCreate: [DMChannel | GroupDMChannel | GuildChannel];
+  channelDelete: [DMChannel | GroupDMChannel | GuildChannel];
+  channelPinsUpdate: [Channel, Date];
+  channelRecipientAdd: [DMChannel | GroupDMChannel, User | PartialUser];
+  channelRecipientRemove: [DMChannel | GroupDMChannel, User | PartialUser];
+  channelUpdate: [Channel, Channel];
+  emojiCreate: [GuildEmoji];
+  emojiDelete: [GuildEmoji];
+  emojiUpdate: [GuildEmoji, GuildEmoji];
+  guildAuditLogEntryCreate: [GuildAuditLogsEntry, Guild];
+  guildBanAdd: [GuildBan];
+  guildBanRemove: [GuildBan];
+  guildCreate: [Guild];
+  guildDelete: [Guild];
+  guildIntegrationsUpdate: [Guild];
+  guildMemberAdd: [GuildMember | PartialGuildMember];
+  guildMemberAvailable: [GuildMember | PartialGuildMember];
+  guildMemberRemove: [GuildMember | PartialGuildMember];
+  guildMemberSpeaking: [GuildMember | PartialGuildMember, Readonly<Set<VoiceState>>];
+  guildMemberUpdate: [GuildMember | PartialGuildMember, GuildMember | PartialGuildMember];
+  guildMembersChunk: [
+    Collection<Snowflake, GuildMember>,
+    Guild,
+    { count?: number; index?: number; nonce?: string | null },
+  ];
+  guildScheduledEventCreate: [GuildScheduledEvent];
+  guildScheduledEventDelete: [GuildScheduledEvent];
+  guildScheduledEventUpdate: [GuildScheduledEvent, GuildScheduledEvent];
+  guildScheduledEventUserAdd: [GuildScheduledEvent, User | PartialUser];
+  guildScheduledEventUserRemove: [GuildScheduledEvent, User | PartialUser];
+  guildUnavailable: [Guild];
+  guildUpdate: [Guild, Guild];
+  interactionCreate: [Interaction];
+  interactionModalCreate: [Modal];
+  inviteCreate: [Invite];
+  inviteDelete: [Invite];
+  messageCreate: [Message];
+  messageDelete: [Message | PartialMessage];
+  messageDeleteBulk: [Collection<Snowflake, Message | PartialMessage>];
+  messagePollVoteAdd: [PollAnswer, Snowflake];
+  messagePollVoteRemove: [PollAnswer, Snowflake];
+  messageReactionAdd: [MessageReaction, User | PartialUser, MessageReactionEventDetails];
+  messageReactionRemove: [MessageReaction, User | PartialUser, MessageReactionEventDetails];
+  messageReactionRemoveAll: [Message | PartialMessage];
+  messageReactionRemoveEmoji: [MessageReaction];
+  messageUpdate: [Message | PartialMessage, Message | PartialMessage];
+  presenceUpdate: [Presence | undefined, Presence | undefined];
+  relationshipAdd: [Snowflake, boolean];
+  relationshipRemove: [Snowflake, number, string | null];
+  relationshipUpdate: [Snowflake, RelationshipUpdateObject, RelationshipUpdateObject];
+  roleCreate: [Role];
+  roleDelete: [Role];
+  roleUpdate: [Role, Role];
+  shardDisconnect: [CloseEvent, number];
+  shardError: [Error, number];
+  shardReady: [number, number | undefined];
+  shardReconnecting: [number];
+  shardResume: [number, number];
+  stageInstanceCreate: [StageInstance];
+  stageInstanceDelete: [StageInstance];
+  stageInstanceUpdate: [StageInstance, StageInstance];
+  stickerCreate: [Sticker];
+  stickerDelete: [Sticker];
+  stickerUpdate: [Sticker, Sticker];
+  threadCreate: [ThreadChannel, boolean];
+  threadDelete: [ThreadChannel];
+  threadListSync: [Collection<Snowflake, ThreadChannel>];
+  threadMemberUpdate: [ThreadMember, ThreadMember];
+  threadMembersUpdate: [Collection<Snowflake, ThreadMember>, Collection<Snowflake, ThreadMember>];
+  threadUpdate: [ThreadChannel, ThreadChannel];
+  typingStart: [Typing];
+  unhandledPacket: [unknown, WebSocketShard];
+  userUpdate: [User | PartialUser, User | PartialUser];
+  voiceChannelEffectSend: [VoiceChannelEffect];
+  voiceServerUpdate: [VoiceState];
+  voiceStateUpdate: [VoiceState | PartialVoiceState, VoiceState | PartialVoiceState];
+  webhookUpdate: [Channel];
+};
+
+export type RelationshipUpdateObject = {
+  type: number;
+  since: Date;
+  nickname: string | null;
+};
+
 export class BaseClient extends EventEmitter {
   public constructor(options?: ClientOptions | WebhookClientOptions);
   public readonly api: RESTManager['api'];
