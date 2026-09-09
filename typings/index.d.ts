@@ -34,9 +34,7 @@ import {
   APIInteractionDataResolvedGuildMember,
   APIInteractionGuildMember,
   APIMessage,
-  APIMessageActionRowComponent,
   APIMessageComponent,
-  APIModalActionRowComponent,
   APIOverwrite,
   APIPartialChannel,
   APIPartialEmoji,
@@ -65,7 +63,13 @@ import {
   ReactionType,
   VoiceChannelEffectSendAnimationType,
   GatewayVoiceChannelEffectSendDispatchData,
+  APIComponentInMessageActionRow,
+  APITextInputComponent,
 } from 'discord-api-types/v10';
+
+type APIMessageActionRowComponent = APIComponentInMessageActionRow;
+type APIModalActionRowComponent = APITextInputComponent;
+
 import { ChildProcess, ChildProcessWithoutNullStreams } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { AgentOptions } from 'node:https';
@@ -195,8 +199,6 @@ import {
   APIMediaGalleryItem,
 } from './rawDataTypes';
 import { Socket } from 'node:dgram';
-
-type Buffer = any;
 
 //#region Classes
 
@@ -528,176 +530,6 @@ export class RESTManager {
   public readonly api: unknown;
   public readonly cdn: unknown;
 }
-
-// Missing partial types
-export type PartialUser = { id: Snowflake; bot?: boolean; username?: string };
-export type PartialMessage = { id: Snowflake; channelId: Snowflake; guildId?: Snowflake | null };
-export type PartialGuildMember = { id: Snowflake; guild: Guild };
-export type PartialVoiceState = { id: Snowflake | null; channelId: Snowflake | null };
-export type PartialGroupDMChannel = { id: Snowflake };
-
-// REST event payloads
-export interface RateLimitData {
-  timeout: number;
-  limit: number;
-  method: string;
-  path: string;
-  route: string;
-  global: boolean;
-}
-export interface APIRequest {
-  method: string;
-  path: string;
-  route: string;
-  options: unknown;
-  retries: number;
-}
-export interface InvalidRequestWarningData {
-  count: number;
-  remainingTime: number;
-}
-export interface ApplicationCommandPermissionsUpdateData {
-  id: Snowflake;
-  guildId: Snowflake;
-  applicationId: Snowflake;
-  permissions: APIApplicationCommandPermission[];
-}
-export interface AutoModerationRule {
-  id: Snowflake;
-  guild: Guild;
-  creatorId: Snowflake | null;
-  name: string;
-  eventType: AutoModerationRuleEventTypes;
-  triggerType: AutoModerationRuleTriggerTypes;
-  triggerMetadata: unknown;
-  actions: unknown[];
-  enabled: boolean;
-  exemptRoles: Collection<Snowflake, Role>;
-  exemptChannels: Collection<Snowflake, Channel>;
-}
-export interface AutoModerationActionExecution {
-  guild: Guild;
-  action: unknown;
-  ruleId: Snowflake;
-  ruleTriggerType: AutoModerationRuleTriggerTypes;
-  userId: Snowflake;
-  channelId: Snowflake | null;
-  messageId: Snowflake | null;
-  alertSystemMessageId: Snowflake | null;
-  content: string;
-  matchedKeyword: Snowflake | null;
-  matchedContent: Snowflake | null;
-}
-
-export type BaseClientEvents = {
-  ready: [Client];
-  error: [Error];
-  warn: [string];
-  debug: [string];
-  invalidated: [];
-  rateLimit: [RateLimitData];
-  apiRequest: [APIRequest];
-  apiResponse: [APIRequest, Response];
-  invalidRequestWarning: [InvalidRequestWarningData];
-};
-
-export type ClientEvents = BaseClientEvents & {
-  applicationCommandCreate: [ApplicationCommand];
-  applicationCommandDelete: [ApplicationCommand];
-  applicationCommandUpdate: [ApplicationCommand, ApplicationCommand];
-  applicationCommandPermissionsUpdate: [ApplicationCommandPermissionsUpdateData];
-  autoModerationActionExecution: [AutoModerationActionExecution];
-  autoModerationRuleCreate: [AutoModerationRule];
-  autoModerationRuleDelete: [AutoModerationRule];
-  autoModerationRuleUpdate: [AutoModerationRule, AutoModerationRule];
-  cacheSweep: [string];
-  callCreate: [CallState];
-  callUpdate: [CallState];
-  callDelete: [CallState];
-  channelCreate: [DMChannel | GroupDMChannel | GuildChannel];
-  channelDelete: [DMChannel | GroupDMChannel | GuildChannel];
-  channelPinsUpdate: [Channel, Date];
-  channelRecipientAdd: [DMChannel | GroupDMChannel, User | PartialUser];
-  channelRecipientRemove: [DMChannel | GroupDMChannel, User | PartialUser];
-  channelUpdate: [Channel, Channel];
-  emojiCreate: [GuildEmoji];
-  emojiDelete: [GuildEmoji];
-  emojiUpdate: [GuildEmoji, GuildEmoji];
-  guildAuditLogEntryCreate: [GuildAuditLogsEntry, Guild];
-  guildBanAdd: [GuildBan];
-  guildBanRemove: [GuildBan];
-  guildCreate: [Guild];
-  guildDelete: [Guild];
-  guildIntegrationsUpdate: [Guild];
-  guildMemberAdd: [GuildMember | PartialGuildMember];
-  guildMemberAvailable: [GuildMember | PartialGuildMember];
-  guildMemberRemove: [GuildMember | PartialGuildMember];
-  guildMemberSpeaking: [GuildMember | PartialGuildMember, Readonly<Set<VoiceState>>];
-  guildMemberUpdate: [GuildMember | PartialGuildMember, GuildMember | PartialGuildMember];
-  guildMembersChunk: [
-    Collection<Snowflake, GuildMember>,
-    Guild,
-    { count?: number; index?: number; nonce?: string | null },
-  ];
-  guildScheduledEventCreate: [GuildScheduledEvent];
-  guildScheduledEventDelete: [GuildScheduledEvent];
-  guildScheduledEventUpdate: [GuildScheduledEvent, GuildScheduledEvent];
-  guildScheduledEventUserAdd: [GuildScheduledEvent, User | PartialUser];
-  guildScheduledEventUserRemove: [GuildScheduledEvent, User | PartialUser];
-  guildUnavailable: [Guild];
-  guildUpdate: [Guild, Guild];
-  interactionCreate: [Interaction];
-  interactionModalCreate: [Modal];
-  inviteCreate: [Invite];
-  inviteDelete: [Invite];
-  messageCreate: [Message];
-  messageDelete: [Message | PartialMessage];
-  messageDeleteBulk: [Collection<Snowflake, Message | PartialMessage>];
-  messagePollVoteAdd: [PollAnswer, Snowflake];
-  messagePollVoteRemove: [PollAnswer, Snowflake];
-  messageReactionAdd: [MessageReaction, User | PartialUser, MessageReactionEventDetails];
-  messageReactionRemove: [MessageReaction, User | PartialUser, MessageReactionEventDetails];
-  messageReactionRemoveAll: [Message | PartialMessage];
-  messageReactionRemoveEmoji: [MessageReaction];
-  messageUpdate: [Message | PartialMessage, Message | PartialMessage];
-  presenceUpdate: [Presence | undefined, Presence | undefined];
-  relationshipAdd: [Snowflake, boolean];
-  relationshipRemove: [Snowflake, number, string | null];
-  relationshipUpdate: [Snowflake, RelationshipUpdateObject, RelationshipUpdateObject];
-  roleCreate: [Role];
-  roleDelete: [Role];
-  roleUpdate: [Role, Role];
-  shardDisconnect: [CloseEvent, number];
-  shardError: [Error, number];
-  shardReady: [number, number | undefined];
-  shardReconnecting: [number];
-  shardResume: [number, number];
-  stageInstanceCreate: [StageInstance];
-  stageInstanceDelete: [StageInstance];
-  stageInstanceUpdate: [StageInstance, StageInstance];
-  stickerCreate: [Sticker];
-  stickerDelete: [Sticker];
-  stickerUpdate: [Sticker, Sticker];
-  threadCreate: [ThreadChannel, boolean];
-  threadDelete: [ThreadChannel];
-  threadListSync: [Collection<Snowflake, ThreadChannel>];
-  threadMemberUpdate: [ThreadMember, ThreadMember];
-  threadMembersUpdate: [Collection<Snowflake, ThreadMember>, Collection<Snowflake, ThreadMember>];
-  threadUpdate: [ThreadChannel, ThreadChannel];
-  typingStart: [Typing];
-  unhandledPacket: [unknown, WebSocketShard];
-  userUpdate: [User | PartialUser, User | PartialUser];
-  voiceChannelEffectSend: [VoiceChannelEffect];
-  voiceServerUpdate: [VoiceState];
-  voiceStateUpdate: [VoiceState | PartialVoiceState, VoiceState | PartialVoiceState];
-  webhookUpdate: [Channel];
-};
-
-export type RelationshipUpdateObject = {
-  type: number;
-  since: Date;
-  nickname: string | null;
-};
 
 export class BaseClient extends EventEmitter {
   public constructor(options?: ClientOptions | WebhookClientOptions);
@@ -1466,8 +1298,8 @@ export class ChannelFlags extends BitField<ChannelFlagsString> {
 
 export abstract class Collector<K, V, F extends unknown[] = []> extends EventEmitter {
   protected constructor(client: Client, options?: CollectorOptions<[V, ...F]>);
-  private _timeout: any | null;
-  private _idletimeout: any | null;
+  private _timeout: NodeJS.Timeout | null;
+  private _idletimeout: NodeJS.Timeout | null;
 
   public readonly client: Client;
   public collected: Collection<K, V>;
@@ -3594,7 +3426,7 @@ export class StoreChannel extends GuildChannel {
 export class Sweepers {
   public constructor(client: Client, options: SweeperOptions);
   public readonly client: Client;
-  public intervals: Record<SweeperKey, any | null>;
+  public intervals: Record<SweeperKey, NodeJS.Timeout | null>;
   public options: SweeperOptions;
 
   public sweepApplicationCommands(
@@ -4211,14 +4043,14 @@ export class WebSocketShard extends EventEmitter {
   private sessionId: string | null;
   private lastPingTimestamp: number;
   private lastHeartbeatAcked: boolean;
-  private ratelimit: { queue: unknown[]; total: number; remaining: number; time: 60e3; timer: any | null };
+  private ratelimit: { queue: unknown[]; total: number; remaining: number; time: 60e3; timer: NodeJS.Timeout | null };
   private connection: WebSocket | null;
-  private helloTimeout: any | null;
+  private helloTimeout: NodeJS.Timeout | null;
   private eventsAttached: boolean;
   private expectedGuilds: Set<Snowflake> | null;
-  private readyTimeout: any | null;
+  private readyTimeout: NodeJS.Timeout | null;
   private closeEmitted: boolean;
-  private wsCloseTimeout: any | null;
+  private wsCloseTimeout: NodeJS.Timeout | null;
 
   public manager: WebSocketManager;
   public id: number;
@@ -5333,4 +5165,3088 @@ export interface APIErrors {
   UNKNOWN_APPLICATION_COMMAND_PERMISSIONS: 10066;
   UNKNOWN_STAGE_INSTANCE: 10067;
   UNKNOWN_GUILD_MEMBER_VERIFICATION_FORM: 10068;
+  UNKNOWN_GUILD_WELCOME_SCREEN: 10069;
+  UNKNOWN_GUILD_SCHEDULED_EVENT: 10070;
+  UNKNOWN_GUILD_SCHEDULED_EVENT_USER: 10071;
+  BOT_PROHIBITED_ENDPOINT: 20001;
+  BOT_ONLY_ENDPOINT: 20002;
+  CANNOT_SEND_EXPLICIT_CONTENT: 20009;
+  NOT_AUTHORIZED: 20012;
+  SLOWMODE_RATE_LIMIT: 20016;
+  ACCOUNT_OWNER_ONLY: 20018;
+  ANNOUNCEMENT_EDIT_LIMIT_EXCEEDED: 20022;
+  CHANNEL_HIT_WRITE_RATELIMIT: 20028;
+  SERVER_HIT_WRITE_RATELIMIT: 20029;
+  CONTENT_NOT_ALLOWED: 20031;
+  GUILD_PREMIUM_LEVEL_TOO_LOW: 20035;
+  MAXIMUM_GUILDS: 30001;
+  MAXIMUM_FRIENDS: 30002;
+  MAXIMUM_PINS: 30003;
+  MAXIMUM_RECIPIENTS: 30004;
+  MAXIMUM_ROLES: 30005;
+  MAXIMUM_WEBHOOKS: 30007;
+  MAXIMUM_EMOJIS: 30008;
+  MAXIMUM_REACTIONS: 30010;
+  MAXIMUM_CHANNELS: 30013;
+  MAXIMUM_ATTACHMENTS: 30015;
+  MAXIMUM_INVITES: 30016;
+  MAXIMUM_ANIMATED_EMOJIS: 30018;
+  MAXIMUM_SERVER_MEMBERS: 30019;
+  MAXIMUM_NUMBER_OF_SERVER_CATEGORIES: 30030;
+  GUILD_ALREADY_HAS_TEMPLATE: 30031;
+  MAXIMUM_THREAD_PARTICIPANTS: 30033;
+  MAXIMUM_NON_GUILD_MEMBERS_BANS: 30035;
+  MAXIMUM_BAN_FETCHES: 30037;
+  MAXIMUM_NUMBER_OF_UNCOMPLETED_GUILD_SCHEDULED_EVENTS_REACHED: 30038;
+  MAXIMUM_NUMBER_OF_STICKERS_REACHED: 30039;
+  MAXIMUM_PRUNE_REQUESTS: 30040;
+  MAXIMUM_GUILD_WIDGET_SETTINGS_UPDATE: 30042;
+  MAXIMUM_NUMBER_OF_PREMIUM_EMOJIS: 30056;
+  UNAUTHORIZED: 40001;
+  ACCOUNT_VERIFICATION_REQUIRED: 40002;
+  DIRECT_MESSAGES_TOO_FAST: 40003;
+  REQUEST_ENTITY_TOO_LARGE: 40005;
+  FEATURE_TEMPORARILY_DISABLED: 40006;
+  USER_BANNED: 40007;
+  TARGET_USER_NOT_CONNECTED_TO_VOICE: 40032;
+  ALREADY_CROSSPOSTED: 40033;
+  MISSING_ACCESS: 50001;
+  INVALID_ACCOUNT_TYPE: 50002;
+  CANNOT_EXECUTE_ON_DM: 50003;
+  EMBED_DISABLED: 50004;
+  CANNOT_EDIT_MESSAGE_BY_OTHER: 50005;
+  CANNOT_SEND_EMPTY_MESSAGE: 50006;
+  CANNOT_MESSAGE_USER: 50007;
+  CANNOT_SEND_MESSAGES_IN_VOICE_CHANNEL: 50008;
+  CHANNEL_VERIFICATION_LEVEL_TOO_HIGH: 50009;
+  OAUTH2_APPLICATION_BOT_ABSENT: 50010;
+  MAXIMUM_OAUTH2_APPLICATIONS: 50011;
+  INVALID_OAUTH_STATE: 50012;
+  MISSING_PERMISSIONS: 50013;
+  INVALID_AUTHENTICATION_TOKEN: 50014;
+  NOTE_TOO_LONG: 50015;
+  INVALID_BULK_DELETE_QUANTITY: 50016;
+  CANNOT_PIN_MESSAGE_IN_OTHER_CHANNEL: 50019;
+  INVALID_OR_TAKEN_INVITE_CODE: 50020;
+  CANNOT_EXECUTE_ON_SYSTEM_MESSAGE: 50021;
+  CANNOT_EXECUTE_ON_CHANNEL_TYPE: 50024;
+  INVALID_OAUTH_TOKEN: 50025;
+  MISSING_OAUTH_SCOPE: 50026;
+  INVALID_WEBHOOK_TOKEN: 50027;
+  INVALID_ROLE: 50028;
+  INVALID_RECIPIENTS: 50033;
+  BULK_DELETE_MESSAGE_TOO_OLD: 50034;
+  INVALID_FORM_BODY: 50035;
+  INVITE_ACCEPTED_TO_GUILD_NOT_CONTAINING_BOT: 50036;
+  INVALID_API_VERSION: 50041;
+  FILE_UPLOADED_EXCEEDS_MAXIMUM_SIZE: 50045;
+  INVALID_FILE_UPLOADED: 50046;
+  CANNOT_SELF_REDEEM_GIFT: 50054;
+  INVALID_GUILD: 50055;
+  INVALID_MESSAGE_TYPE: 50068;
+  PAYMENT_SOURCE_REQUIRED: 50070;
+  CANNOT_DELETE_COMMUNITY_REQUIRED_CHANNEL: 50074;
+  INVALID_STICKER_SENT: 50081;
+  INVALID_OPERATION_ON_ARCHIVED_THREAD: 50083;
+  INVALID_THREAD_NOTIFICATION_SETTINGS: 50084;
+  PARAMETER_EARLIER_THAN_CREATION: 50085;
+  GUILD_NOT_AVAILABLE_IN_LOCATION: 50095;
+  GUILD_MONETIZATION_REQUIRED: 50097;
+  INSUFFICIENT_BOOSTS: 50101;
+  INVALID_JSON: 50109;
+  CANNOT_MIX_SUBSCRIPTION_AND_NON_SUBSCRIPTION_ROLES_FOR_EMOJI: 50144;
+  VOICE_MESSAGES_DO_NOT_SUPPORT_ADDITIONAL_CONTENT: 50159;
+  VOICE_MESSAGES_MUST_HAVE_A_SINGLE_AUDIO_ATTACHMENT: 50160;
+  VOICE_MESSAGES_MUST_HAVE_SUPPORTING_METADATA: 50161;
+  VOICE_MESSAGES_CANNOT_BE_EDITED: 50162;
+  YOU_CANNOT_SEND_VOICE_MESSAGES_IN_THIS_CHANNEL: 50173;
+  CANNOT_CONVERT_PREMIUM_EMOJI_TO_NORMAL_EMOJI: 50145;
+  TWO_FACTOR_REQUIRED: 60003;
+  NO_USERS_WITH_DISCORDTAG_EXIST: 80004;
+  REACTION_BLOCKED: 90001;
+  RESOURCE_OVERLOADED: 130000;
+  STAGE_ALREADY_OPEN: 150006;
+  CANNOT_REPLY_WITHOUT_READ_MESSAGE_HISTORY_PERMISSION: 160002;
+  MESSAGE_ALREADY_HAS_THREAD: 160004;
+  THREAD_LOCKED: 160005;
+  MAXIMUM_ACTIVE_THREADS: 160006;
+  MAXIMUM_ACTIVE_ANNOUNCEMENT_THREADS: 160007;
+  INVALID_JSON_FOR_UPLOADED_LOTTIE_FILE: 170001;
+  UPLOADED_LOTTIES_CANNOT_CONTAIN_RASTERIZED_IMAGES: 170002;
+  STICKER_MAXIMUM_FRAMERATE_EXCEEDED: 170003;
+  STICKER_FRAME_COUNT_EXCEEDS_MAXIMUM_OF_1000_FRAMES: 170004;
+  LOTTIE_ANIMATION_MAXIMUM_DIMENSIONS_EXCEEDED: 170005;
+  STICKER_FRAME_RATE_IS_TOO_SMALL_OR_TOO_LARGE: 170006;
+  STICKER_ANIMATION_DURATION_EXCEEDS_MAXIMUM_OF_5_SECONDS: 170007;
+  CANNOT_UPDATE_A_FINISHED_EVENT: 180000;
+  FAILED_TO_CREATE_STAGE_NEEDED_FOR_STAGE_EVENT: 180002;
 }
+
+export interface APIRequest {
+  method: 'get' | 'post' | 'delete' | 'patch' | 'put';
+  options: unknown;
+  path: string;
+  retries: number;
+  route: string;
+}
+
+export interface ApplicationAsset {
+  name: string;
+  id: Snowflake;
+  type: 'BIG' | 'SMALL';
+}
+
+export interface BaseApplicationCommandData {
+  name: string;
+  nameLocalizations?: LocalizationMap;
+  /** @deprecated Use {@link defaultMemberPermissions} and {@link dmPermission} instead. */
+  defaultPermission?: boolean;
+  defaultMemberPermissions?: PermissionResolvable | null;
+  dmPermission?: boolean;
+}
+
+export type CommandOptionDataTypeResolvable = ApplicationCommandOptionType | ApplicationCommandOptionTypes;
+
+export type CommandOptionChannelResolvableType = ApplicationCommandOptionTypes.CHANNEL | 'CHANNEL';
+
+export type CommandOptionChoiceResolvableType =
+  | ApplicationCommandOptionTypes.STRING
+  | 'STRING'
+  | CommandOptionNumericResolvableType;
+
+export type CommandOptionNumericResolvableType =
+  | ApplicationCommandOptionTypes.NUMBER
+  | 'NUMBER'
+  | ApplicationCommandOptionTypes.INTEGER
+  | 'INTEGER';
+
+export type CommandOptionSubOptionResolvableType =
+  | ApplicationCommandOptionTypes.SUB_COMMAND
+  | 'SUB_COMMAND'
+  | ApplicationCommandOptionTypes.SUB_COMMAND_GROUP
+  | 'SUB_COMMAND_GROUP';
+
+export type CommandOptionNonChoiceResolvableType = Exclude<
+  CommandOptionDataTypeResolvable,
+  CommandOptionChoiceResolvableType | CommandOptionSubOptionResolvableType | CommandOptionChannelResolvableType
+>;
+
+export interface BaseApplicationCommandOptionsData {
+  name: string;
+  nameLocalizations?: LocalizationMap;
+  description: string;
+  descriptionLocalizations?: LocalizationMap;
+  required?: boolean;
+  autocomplete?: never;
+}
+
+export interface UserApplicationCommandData extends BaseApplicationCommandData {
+  type: 'USER' | ApplicationCommandTypes.USER;
+}
+
+export interface MessageApplicationCommandData extends BaseApplicationCommandData {
+  type: 'MESSAGE' | ApplicationCommandTypes.MESSAGE;
+}
+
+export interface ChatInputApplicationCommandData extends BaseApplicationCommandData {
+  description: string;
+  descriptionLocalizations?: LocalizationMap;
+  type?: 'CHAT_INPUT' | ApplicationCommandTypes.CHAT_INPUT;
+  options?: ApplicationCommandOptionData[];
+}
+
+export type ApplicationCommandData =
+  | UserApplicationCommandData
+  | MessageApplicationCommandData
+  | ChatInputApplicationCommandData;
+
+export interface ApplicationCommandChannelOptionData extends BaseApplicationCommandOptionsData {
+  type: CommandOptionChannelResolvableType;
+  channelTypes?: ExcludeEnum<typeof ChannelTypes, 'UNKNOWN'>[];
+  channel_types?: Exclude<ChannelTypes, ChannelTypes.UNKNOWN>[];
+}
+
+export interface ApplicationCommandChannelOption extends BaseApplicationCommandOptionsData {
+  type: 'CHANNEL';
+  channelTypes?: (keyof typeof ChannelTypes)[];
+}
+
+export interface ApplicationCommandAutocompleteOption extends Omit<BaseApplicationCommandOptionsData, 'autocomplete'> {
+  type:
+  | 'STRING'
+  | 'NUMBER'
+  | 'INTEGER'
+  | ApplicationCommandOptionTypes.STRING
+  | ApplicationCommandOptionTypes.NUMBER
+  | ApplicationCommandOptionTypes.INTEGER;
+  autocomplete: true;
+}
+
+export interface ApplicationCommandChoicesData extends Omit<BaseApplicationCommandOptionsData, 'autocomplete'> {
+  type: CommandOptionChoiceResolvableType;
+  choices?: ApplicationCommandOptionChoiceData[];
+  autocomplete?: false;
+}
+
+export interface ApplicationCommandChoicesOption extends Omit<BaseApplicationCommandOptionsData, 'autocomplete'> {
+  type: CommandOptionChoiceResolvableType;
+  choices?: ApplicationCommandOptionChoiceData[];
+  autocomplete?: false;
+}
+
+export interface ApplicationCommandNumericOptionData extends ApplicationCommandChoicesData {
+  type: CommandOptionNumericResolvableType;
+  minValue?: number;
+  min_value?: number;
+  maxValue?: number;
+  max_value?: number;
+}
+
+export interface ApplicationCommandStringOptionData extends ApplicationCommandChoicesData {
+  type: ApplicationCommandOptionTypes.STRING;
+  minLength?: number;
+  min_length?: number;
+  maxLength?: number;
+  max_length?: number;
+}
+
+export interface ApplicationCommandNumericOption extends ApplicationCommandChoicesOption {
+  type: CommandOptionNumericResolvableType;
+  minValue?: number;
+  maxValue?: number;
+}
+
+export interface ApplicationCommandStringOption extends ApplicationCommandChoicesOption {
+  type: ApplicationCommandOptionTypes.STRING;
+  minLength?: number;
+  maxLength?: number;
+}
+
+export interface ApplicationCommandSubGroupData extends Omit<BaseApplicationCommandOptionsData, 'required'> {
+  type: 'SUB_COMMAND_GROUP' | ApplicationCommandOptionTypes.SUB_COMMAND_GROUP;
+  options?: ApplicationCommandSubCommandData[];
+}
+
+export interface ApplicationCommandSubGroup extends Omit<BaseApplicationCommandOptionsData, 'required'> {
+  type: 'SUB_COMMAND_GROUP';
+  options?: ApplicationCommandSubCommand[];
+}
+
+export interface ApplicationCommandSubCommandData extends Omit<BaseApplicationCommandOptionsData, 'required'> {
+  type: 'SUB_COMMAND' | ApplicationCommandOptionTypes.SUB_COMMAND;
+  options?: (
+    | ApplicationCommandChoicesData
+    | ApplicationCommandNonOptionsData
+    | ApplicationCommandChannelOptionData
+    | ApplicationCommandAutocompleteOption
+    | ApplicationCommandNumericOptionData
+    | ApplicationCommandStringOptionData
+  )[];
+}
+
+export interface ApplicationCommandSubCommand extends Omit<BaseApplicationCommandOptionsData, 'required'> {
+  type: 'SUB_COMMAND';
+  options?: (ApplicationCommandChoicesOption | ApplicationCommandNonOptions | ApplicationCommandChannelOption)[];
+}
+
+export interface ApplicationCommandNonOptionsData extends BaseApplicationCommandOptionsData {
+  type: CommandOptionNonChoiceResolvableType;
+}
+
+export interface ApplicationCommandNonOptions extends BaseApplicationCommandOptionsData {
+  type: Exclude<CommandOptionNonChoiceResolvableType, ApplicationCommandOptionTypes>;
+}
+
+export type ApplicationCommandOptionData =
+  | ApplicationCommandSubGroupData
+  | ApplicationCommandNonOptionsData
+  | ApplicationCommandChannelOptionData
+  | ApplicationCommandChoicesData
+  | ApplicationCommandAutocompleteOption
+  | ApplicationCommandNumericOptionData
+  | ApplicationCommandStringOptionData
+  | ApplicationCommandSubCommandData;
+
+export type ApplicationCommandOption =
+  | ApplicationCommandSubGroup
+  | ApplicationCommandNonOptions
+  | ApplicationCommandChannelOption
+  | ApplicationCommandChoicesOption
+  | ApplicationCommandNumericOption
+  | ApplicationCommandStringOption
+  | ApplicationCommandSubCommand;
+
+export interface ApplicationCommandOptionChoiceData {
+  name: string;
+  nameLocalizations?: LocalizationMap;
+  value: string | number;
+}
+
+export type ApplicationCommandType = keyof typeof ApplicationCommandTypes;
+
+export type ApplicationCommandOptionType = keyof typeof ApplicationCommandOptionTypes;
+
+export type AutoModerationRuleTriggerType = keyof typeof AutoModerationRuleTriggerTypes;
+
+export type AutoModerationRuleKeywordPresetType = keyof typeof AutoModerationRuleKeywordPresetTypes;
+
+export type AutoModerationActionType = keyof typeof AutoModerationActionTypes;
+
+export type AutoModerationRuleEventType = keyof typeof AutoModerationRuleEventTypes;
+
+export class AutoModerationActionExecution {
+  private constructor(data: GatewayAutoModerationActionExecutionDispatchData, guild: Guild);
+  public guild: Guild;
+  public action: AutoModerationAction;
+  public ruleId: Snowflake;
+  public ruleTriggerType: AutoModerationRuleTriggerType;
+  public userId: Snowflake;
+  public channelId: Snowflake | null;
+  public messageId: Snowflake | null;
+  public alertSystemMessageId: Snowflake | null;
+  public content: string;
+  public matchedKeyword: string | null;
+  public matchedContent: string | null;
+  public get autoModerationRule(): AutoModerationRule | null;
+}
+
+export class AutoModerationRule extends Base {
+  private constructor(client: Client<true>, data: APIAutoModerationRule, guild: Guild);
+  public id: Snowflake;
+  public guild: Guild;
+  public name: string;
+  public creatorId: Snowflake;
+  public eventType: AutoModerationRuleEventType;
+  public triggerType: AutoModerationRuleTriggerType;
+  public triggerMetadata: AutoModerationTriggerMetadata;
+  public actions: AutoModerationAction[];
+  public enabled: boolean;
+  public exemptRoles: Collection<Snowflake, Role>;
+  public exemptChannels: Collection<Snowflake, GuildBasedChannel>;
+  public edit(options: AutoModerationRuleEditOptions): Promise<AutoModerationRule>;
+  public delete(reason?: string): Promise<void>;
+  public setName(name: string, reason?: string): Promise<AutoModerationRule>;
+  public setEventType(
+    eventType: AutoModerationRuleEventType | AutoModerationRuleEventTypes,
+    reason?: string,
+  ): Promise<AutoModerationRule>;
+  public setKeywordFilter(keywordFilter: string[], reason?: string): Promise<AutoModerationRule>;
+  public setRegexPatterns(regexPatterns: string[], reason?: string): Promise<AutoModerationRule>;
+  public setPresets(presets: AutoModerationRuleKeywordPresetType[], reason?: string): Promise<AutoModerationRule>;
+  public setAllowList(allowList: string[], reason?: string): Promise<AutoModerationRule>;
+  public setMentionRaidProtectionEnabled(
+    mentionRaidProtectionEnabled: boolean,
+    reason?: string,
+  ): Promise<AutoModerationRule>;
+  public setMentionTotalLimit(mentionTotalLimit: number, reason?: string): Promise<AutoModerationRule>;
+  public setActions(actions: AutoModerationActionOptions[], reason?: string): Promise<AutoModerationRule>;
+  public setEnabled(enabled?: boolean, reason?: string): Promise<AutoModerationRule>;
+  public setExemptRoles(
+    roles: Collection<Snowflake, Role> | RoleResolvable[],
+    reason?: string,
+  ): Promise<AutoModerationRule>;
+  public setExemptChannels(
+    channels: Collection<Snowflake, GuildBasedChannel> | GuildChannelResolvable[],
+    reason?: string,
+  ): Promise<AutoModerationRule>;
+}
+
+export class AutoModerationRuleManager extends CachedManager<
+  Snowflake,
+  AutoModerationRule,
+  AutoModerationRuleResolvable
+> {
+  private constructor(guild: Guild, iterable: unknown);
+  public guild: Guild;
+  public create(options: AutoModerationRuleCreateOptions): Promise<AutoModerationRule>;
+  public edit(
+    autoModerationRule: AutoModerationRuleResolvable,
+    options: AutoModerationRuleEditOptions,
+  ): Promise<AutoModerationRule>;
+  public fetch(options: AutoModerationRuleResolvable | FetchAutoModerationRuleOptions): Promise<AutoModerationRule>;
+  public fetch(options?: FetchAutoModerationRulesOptions): Promise<Collection<Snowflake, AutoModerationRule>>;
+  public delete(autoModerationRule: AutoModerationRuleResolvable, reason?: string): Promise<void>;
+}
+
+export interface ApplicationCommandPermissionData {
+  id: Snowflake;
+  type: ApplicationCommandPermissionType | ApplicationCommandPermissionTypes;
+  permission: boolean;
+}
+
+export interface ApplicationCommandPermissionsUpdateData {
+  permissions: ApplicationCommandPermissions;
+  id: Snowflake;
+  guildId: Snowflake;
+  applicationId: Snowflake;
+}
+
+export interface ApplicationCommandPermissions extends ApplicationCommandPermissionData {
+  type: ApplicationCommandPermissionType;
+}
+
+export type ApplicationCommandPermissionType = keyof typeof ApplicationCommandPermissionTypes;
+
+export type ApplicationCommandResolvable = ApplicationCommand | Snowflake;
+
+export type ApplicationFlagsString =
+  | 'APPLICATION_AUTO_MODERATION_RULE_CREATE_BADGE'
+  | 'GATEWAY_PRESENCE'
+  | 'GATEWAY_PRESENCE_LIMITED'
+  | 'GATEWAY_GUILD_MEMBERS'
+  | 'GATEWAY_GUILD_MEMBERS_LIMITED'
+  | 'VERIFICATION_PENDING_GUILD_LIMIT'
+  | 'EMBEDDED'
+  | 'GATEWAY_MESSAGE_CONTENT'
+  | 'GATEWAY_MESSAGE_CONTENT_LIMITED'
+  | 'APPLICATION_COMMAND_BADGE';
+
+export interface ApplicationRoleConnectionMetadataEditOptions {
+  name: string;
+  nameLocalizations?: LocalizationMap | null;
+  description: string;
+  descriptionLocalizations?: LocalizationMap | null;
+  key: string;
+  type: ApplicationRoleConnectionMetadataTypes;
+}
+
+export interface AutoModerationAction {
+  type: AutoModerationActionType | AutoModerationActionTypes;
+  metadata: AutoModerationActionMetadata;
+}
+
+export interface AutoModerationActionMetadata {
+  channelId: Snowflake | null;
+  durationSeconds: number | null;
+  customMessage: string | null;
+}
+
+export interface AutoModerationTriggerMetadata {
+  keywordFilter: string[];
+  regexPatterns: string[];
+  presets: (AutoModerationRuleKeywordPresetType | AutoModerationRuleKeywordPresetTypes)[];
+  allowList: string[];
+  mentionRaidProtectionEnabled: boolean;
+  mentionTotalLimit: number | null;
+}
+
+export interface FetchAutoModerationRuleOptions extends BaseFetchOptions {
+  autoModerationRule: AutoModerationRuleResolvable;
+}
+
+export interface FetchAutoModerationRulesOptions {
+  cache?: boolean;
+}
+
+export interface AutoModerationRuleCreateOptions {
+  name: string;
+  eventType: AutoModerationRuleEventType | AutoModerationRuleEventTypes;
+  triggerType: AutoModerationRuleTriggerType | AutoModerationRuleTriggerTypes;
+  triggerMetadata?: AutoModerationTriggerMetadataOptions;
+  actions: AutoModerationActionOptions[];
+  enabled?: boolean;
+  exemptRoles?: Collection<Snowflake, Role> | RoleResolvable[];
+  exemptChannels?: Collection<Snowflake, GuildBasedChannel> | GuildChannelResolvable[];
+  reason?: string;
+}
+
+export interface AutoModerationRuleEditOptions extends Partial<Omit<AutoModerationRuleCreateOptions, 'triggerType'>> { }
+
+export interface AutoModerationTriggerMetadataOptions extends Partial<AutoModerationTriggerMetadata> { }
+
+export interface AutoModerationActionOptions {
+  type: AutoModerationActionType | AutoModerationActionTypes;
+  metadata?: AutoModerationActionMetadataOptions;
+}
+
+export interface AutoModerationActionMetadataOptions extends Partial<Omit<AutoModerationActionMetadata, 'channelId'>> {
+  channel: GuildTextChannelResolvable | ThreadChannel;
+}
+
+export type AuditLogChange = {
+  [SourceElement in APIAuditLogChange as SourceElement['key']]: {
+    key: SourceElement['key'];
+    old?: SourceElement['old_value'];
+    new?: SourceElement['new_value'];
+  };
+}[APIAuditLogChange['key']];
+
+export type Awaitable<T> = T | PromiseLike<T>;
+
+export type AwaitMessageComponentOptions<T extends MessageComponentInteraction> = Omit<
+  MessageComponentCollectorOptions<T>,
+  'max' | 'maxComponents' | 'maxUsers'
+>;
+
+export interface AwaitMessagesOptions extends MessageCollectorOptions {
+  errors?: string[];
+}
+
+export type AwaitModalSubmitOptions<T extends ModalSubmitInteraction> = Omit<
+  ModalSubmitInteractionCollectorOptions<T>,
+  'max' | 'maxComponents' | 'maxUsers'
+> & {
+  time: number;
+};
+
+export interface AwaitReactionsOptions extends ReactionCollectorOptions {
+  errors?: string[];
+}
+
+export interface BanOptions {
+  /** @deprecated Use {@link deleteMessageSeconds} instead. */
+  days?: number;
+  deleteMessageSeconds?: number;
+  reason?: string;
+}
+
+export interface BulkBanOptions extends Omit<BanOptions, 'deleteMessageDays'> { }
+
+export interface BulkBanResult {
+  bannedUsers: readonly Snowflake[];
+  failedUsers: readonly Snowflake[];
+}
+
+export type Base64Resolvable = Buffer | Base64String;
+
+export type Base64String = string;
+
+export interface BaseFetchOptions {
+  cache?: boolean;
+  force?: boolean;
+}
+
+export interface BaseMessageComponentOptions {
+  type?: MessageComponentType | MessageComponentTypes;
+}
+
+export type BitFieldResolvable<T extends string, N extends number | bigint> =
+  | RecursiveReadonlyArray<T | N | `${bigint}` | Readonly<BitField<T, N>>>
+  | T
+  | N
+  | `${bigint}`
+  | Readonly<BitField<T, N>>;
+
+export type BufferResolvable = Buffer | string;
+
+export interface Caches {
+  ApplicationCommandManager: [manager: typeof ApplicationCommandManager, holds: typeof ApplicationCommand];
+  AutoModerationRuleManager: [manager: typeof AutoModerationRuleManager, holds: typeof AutoModerationRule];
+  BaseGuildEmojiManager: [manager: typeof BaseGuildEmojiManager, holds: typeof GuildEmoji];
+  GuildEmojiManager: [manager: typeof GuildEmojiManager, holds: typeof GuildEmoji];
+  // TODO: ChannelManager: [manager: typeof ChannelManager, holds: typeof Channel];
+  // TODO: GuildChannelManager: [manager: typeof GuildChannelManager, holds: typeof GuildChannel];
+  // TODO: GuildManager: [manager: typeof GuildManager, holds: typeof Guild];
+  GuildMemberManager: [manager: typeof GuildMemberManager, holds: typeof GuildMember];
+  GuildBanManager: [manager: typeof GuildBanManager, holds: typeof GuildBan];
+  GuildInviteManager: [manager: typeof GuildInviteManager, holds: typeof Invite];
+  GuildScheduledEventManager: [manager: typeof GuildScheduledEventManager, holds: typeof GuildScheduledEvent];
+  GuildStickerManager: [manager: typeof GuildStickerManager, holds: typeof Sticker];
+  MessageManager: [manager: typeof MessageManager, holds: typeof Message];
+  // TODO: PermissionOverwriteManager: [manager: typeof PermissionOverwriteManager, holds: typeof PermissionOverwrites];
+  PresenceManager: [manager: typeof PresenceManager, holds: typeof Presence];
+  ReactionManager: [manager: typeof ReactionManager, holds: typeof MessageReaction];
+  ReactionUserManager: [manager: typeof ReactionUserManager, holds: typeof User];
+  // TODO: RoleManager: [manager: typeof RoleManager, holds: typeof Role];
+  StageInstanceManager: [manager: typeof StageInstanceManager, holds: typeof StageInstance];
+  ThreadManager: [manager: typeof ThreadManager, holds: typeof ThreadChannel];
+  ThreadMemberManager: [manager: typeof ThreadMemberManager, holds: typeof ThreadMember];
+  UserManager: [manager: typeof UserManager, holds: typeof User];
+  VoiceStateManager: [manager: typeof VoiceStateManager, holds: typeof VoiceState];
+}
+
+export type CacheConstructors = {
+  [K in keyof Caches]: Caches[K][0] & { name: K };
+};
+
+// This doesn't actually work the way it looks 😢.
+// Narrowing the type of `manager.name` doesn't propagate type information to `holds` and the return type.
+export type CacheFactory = (
+  manager: CacheConstructors[keyof Caches],
+  holds: Caches[(typeof manager)['name']][1],
+) => (typeof manager)['prototype'] extends DataManager<infer K, infer V, any> ? Collection<K, V> : never;
+
+export type CacheWithLimitsOptions = {
+  [K in keyof Caches]?: Caches[K][0]['prototype'] extends DataManager<infer K, infer V, any>
+  ? LimitedCollectionOptions<K, V> | number
+  : never;
+};
+export interface CategoryCreateChannelOptions {
+  permissionOverwrites?: OverwriteResolvable[] | Collection<Snowflake, OverwriteResolvable>;
+  topic?: string;
+  type?: ExcludeEnum<
+    typeof ChannelTypes,
+    | 'DM'
+    | 'GROUP_DM'
+    | 'UNKNOWN'
+    | 'GUILD_PUBLIC_THREAD'
+    | 'GUILD_NEWS_THREAD'
+    | 'GUILD_PRIVATE_THREAD'
+    | 'GUILD_CATEGORY'
+  >;
+  nsfw?: boolean;
+  bitrate?: number;
+  userLimit?: number;
+  rateLimitPerUser?: number;
+  position?: number;
+  rtcRegion?: string;
+  videoQualityMode?: VideoQualityMode;
+  availableTags?: GuildForumTagData[];
+  defaultReactionEmoji?: DefaultReactionEmoji;
+  defaultSortOrder?: SortOrderTypes;
+  defaultForumLayout?: ForumLayoutTypes;
+  defaultThreadRateLimitPerUser?: number;
+  reason?: string;
+}
+
+export interface ChannelCreationOverwrites {
+  allow?: PermissionResolvable;
+  deny?: PermissionResolvable;
+  id: RoleResolvable | UserResolvable;
+}
+
+export interface ChannelData {
+  name?: string;
+  type?: Pick<typeof ChannelTypes, 'GUILD_TEXT' | 'GUILD_NEWS'>;
+  position?: number;
+  topic?: string;
+  nsfw?: boolean;
+  bitrate?: number;
+  userLimit?: number;
+  parent?: CategoryChannelResolvable | null;
+  rateLimitPerUser?: number;
+  lockPermissions?: boolean;
+  permissionOverwrites?: readonly OverwriteResolvable[] | Collection<Snowflake, OverwriteResolvable>;
+  defaultAutoArchiveDuration?: ThreadAutoArchiveDuration | 'MAX';
+  rtcRegion?: string | null;
+  videoQualityMode?: VideoQualityMode | null;
+  availableTags?: GuildForumTagData[];
+  defaultReactionEmoji?: DefaultReactionEmoji;
+  defaultThreadRateLimitPerUser?: number;
+  defaultSortOrder?: SortOrderTypes | null;
+  defaultForumLayout?: ForumLayoutTypes;
+  flags?: ChannelFlagsResolvable;
+}
+
+export interface ChannelLogsQueryOptions {
+  limit?: number;
+  before?: Snowflake;
+  after?: Snowflake;
+  around?: Snowflake;
+}
+
+export type ChannelMention = `<#${Snowflake}>`;
+
+export interface ChannelPosition {
+  channel: NonThreadGuildBasedChannel | Snowflake;
+  lockPermissions?: boolean;
+  parent?: CategoryChannelResolvable | null;
+  position?: number;
+}
+
+export type GuildTextChannelResolvable = TextChannel | NewsChannel | Snowflake;
+export type ChannelResolvable = AnyChannel | Snowflake;
+
+export interface ChannelWebhookCreateOptions {
+  avatar?: BufferResolvable | Base64Resolvable | null;
+  reason?: string;
+}
+
+export interface BaseClientEvents {
+  apiResponse: [request: APIRequest, response: Response];
+  apiRequest: [request: APIRequest];
+  debug: [message: string];
+  rateLimit: [rateLimitData: RateLimitData];
+  invalidRequestWarning: [invalidRequestWarningData: InvalidRequestWarningData];
+}
+
+export interface ClientEvents extends BaseClientEvents {
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  applicationCommandCreate: [command: ApplicationCommand];
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  applicationCommandDelete: [command: ApplicationCommand];
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  applicationCommandUpdate: [oldCommand: ApplicationCommand | null, newCommand: ApplicationCommand];
+  applicationCommandPermissionsUpdate: [data: ApplicationCommandPermissionsUpdateData];
+  /** @deprecated This event is not received by user accounts. */
+  autoModerationActionExecution: [autoModerationActionExecution: AutoModerationActionExecution];
+  /** @deprecated This event is not received by user accounts. */
+  autoModerationRuleCreate: [autoModerationRule: AutoModerationRule];
+  /** @deprecated This event is not received by user accounts. */
+  autoModerationRuleDelete: [autoModerationRule: AutoModerationRule];
+  /** @deprecated This event is not received by user accounts. */
+  autoModerationRuleUpdate: [
+    oldAutoModerationRule: AutoModerationRule | null,
+    newAutoModerationRule: AutoModerationRule,
+  ];
+  cacheSweep: [message: string];
+  channelCreate: [channel: NonThreadGuildBasedChannel];
+  channelDelete: [channel: DMChannel | NonThreadGuildBasedChannel];
+  channelPinsUpdate: [channel: TextBasedChannel, date: Date];
+  channelUpdate: [
+    oldChannel: DMChannel | NonThreadGuildBasedChannel,
+    newChannel: DMChannel | NonThreadGuildBasedChannel,
+  ];
+  warn: [message: string];
+  emojiCreate: [emoji: GuildEmoji];
+  emojiDelete: [emoji: GuildEmoji];
+  emojiUpdate: [oldEmoji: GuildEmoji, newEmoji: GuildEmoji];
+  error: [error: Error];
+  guildAvailable: [guild: Guild];
+  guildBanAdd: [ban: GuildBan];
+  guildBanRemove: [ban: GuildBan];
+  guildCreate: [guild: Guild];
+  guildDelete: [guild: Guild];
+  guildUnavailable: [guild: Guild];
+  guildIntegrationsUpdate: [guild: Guild];
+  guildMemberAdd: [member: GuildMember];
+  guildMemberAvailable: [member: GuildMember | PartialGuildMember];
+  guildMemberRemove: [member: GuildMember | PartialGuildMember];
+  guildMembersChunk: [
+    members: Collection<Snowflake, GuildMember>,
+    guild: Guild,
+    data: { count: number; index: number; nonce: string | undefined; notFound: unknown[] },
+  ];
+  guildMemberUpdate: [oldMember: GuildMember | PartialGuildMember, newMember: GuildMember];
+  guildUpdate: [oldGuild: Guild, newGuild: Guild];
+  inviteCreate: [invite: Invite];
+  inviteDelete: [invite: Invite];
+  /** @deprecated Use messageCreate instead */
+  message: [message: Message];
+  messageCreate: [message: Message];
+  messageDelete: [message: Message | PartialMessage];
+  messageReactionRemoveAll: [
+    message: Message | PartialMessage,
+    reactions: Collection<string | Snowflake, MessageReaction>,
+  ];
+  messageReactionRemoveEmoji: [reaction: MessageReaction | PartialMessageReaction];
+  messageDeleteBulk: [messages: Collection<Snowflake, Message | PartialMessage>];
+  messageReactionAdd: [
+    reaction: MessageReaction | PartialMessageReaction,
+    user: User | PartialUser,
+    details: MessageReactionEventDetails,
+  ];
+  messageReactionRemove: [
+    reaction: MessageReaction | PartialMessageReaction,
+    user: User | PartialUser,
+    details: MessageReactionEventDetails,
+  ];
+  messageUpdate: [oldMessage: Message | PartialMessage, newMessage: Message | PartialMessage];
+  presenceUpdate: [oldPresence: Presence | null, newPresence: Presence];
+  ready: [client: Client<true>];
+  invalidated: [];
+  roleCreate: [role: Role];
+  roleDelete: [role: Role];
+  roleUpdate: [oldRole: Role, newRole: Role];
+  threadCreate: [thread: ThreadChannel, newlyCreated: boolean];
+  threadDelete: [thread: ThreadChannel];
+  threadListSync: [threads: Collection<Snowflake, ThreadChannel>];
+  threadMemberUpdate: [oldMember: ThreadMember, newMember: ThreadMember];
+  threadMembersUpdate: [
+    oldMembers: Collection<Snowflake, ThreadMember>,
+    newMembers: Collection<Snowflake, ThreadMember>,
+  ];
+  threadUpdate: [oldThread: ThreadChannel, newThread: ThreadChannel];
+  typingStart: [typing: Typing];
+  userUpdate: [oldUser: User | PartialUser, newUser: User];
+  voiceChannelEffectSend: [voiceChannelEffect: VoiceChannelEffect];
+  voiceStateUpdate: [oldState: VoiceState, newState: VoiceState];
+  webhookUpdate: [channel: TextChannel | NewsChannel | VoiceChannel | ForumChannel | MediaChannel | StageChannel];
+  shardDisconnect: [closeEvent: CloseEvent, shardId: number];
+  shardError: [error: Error, shardId: number];
+  shardReady: [shardId: number, unavailableGuilds: Set<Snowflake> | undefined];
+  shardReconnecting: [shardId: number];
+  shardResume: [shardId: number, replayedEvents: number];
+  stageInstanceCreate: [stageInstance: StageInstance];
+  stageInstanceUpdate: [oldStageInstance: StageInstance | null, newStageInstance: StageInstance];
+  stageInstanceDelete: [stageInstance: StageInstance];
+  stickerCreate: [sticker: Sticker];
+  stickerDelete: [sticker: Sticker];
+  stickerUpdate: [oldSticker: Sticker, newSticker: Sticker];
+  guildScheduledEventCreate: [guildScheduledEvent: GuildScheduledEvent];
+  guildScheduledEventUpdate: [
+    oldGuildScheduledEvent: GuildScheduledEvent | PartialGuildScheduledEvent | null,
+    newGuildScheduledEvent: GuildScheduledEvent,
+  ];
+  guildScheduledEventDelete: [guildScheduledEvent: GuildScheduledEvent | PartialGuildScheduledEvent];
+  guildScheduledEventUserAdd: [guildScheduledEvent: GuildScheduledEvent | PartialGuildScheduledEvent, user: User];
+  guildScheduledEventUserRemove: [guildScheduledEvent: GuildScheduledEvent, PartialGuildScheduledEvent, user: User];
+  guildAuditLogEntryCreate: [auditLogEntry: GuildAuditLogsEntry, guild: Guild];
+  raw: [packet: any, shard: number];
+  unhandledPacket: [packet: { t?: string; d: any }, shard: number];
+  relationshipAdd: [userId: Snowflake, shouldNotify: boolean];
+  relationshipRemove: [userId: Snowflake, type: RelationshipTypes, nickname: string | null];
+  relationshipUpdate: [
+    userId: Snowflake,
+    oldData: {
+      nickname: string | null;
+      since: Date;
+      type: RelationshipTypes;
+    },
+    newData: {
+      nickname: string | null;
+      since: Date;
+      type: RelationshipTypes;
+    },
+  ];
+  channelRecipientAdd: [channel: GroupDMChannel, user: User];
+  channelRecipientRemove: [channel: GroupDMChannel, user: User];
+  interactionModalCreate: [modal: Modal];
+  callCreate: [call: CallState];
+  callUpdate: [call: CallState];
+  callDelete: [call: CallState];
+  messagePollVoteAdd: [pollAnswer: PollAnswer, userId: Snowflake];
+  messagePollVoteRemove: [pollAnswer: PollAnswer, userId: Snowflake];
+}
+
+export interface ClientFetchInviteOptions {
+  guildScheduledEventId?: Snowflake;
+}
+
+export type CaptchaSolver = (captcha: Captcha, UserAgent: string) => Promise<string>;
+
+export interface ClientOptions {
+  DMChannelVoiceStatusSync?: number;
+  captchaRetryLimit?: number;
+  captchaSolver?: CaptchaSolver;
+  closeTimeout?: number;
+  makeCache?: CacheFactory;
+  /** @deprecated Pass the value of this property as `lifetime` to `sweepers.messages` instead. */
+  messageCacheLifetime?: number;
+  /** @deprecated Pass the value of this property as `interval` to `sweepers.messages` instead. */
+  messageSweepInterval?: number;
+  allowedMentions?: MessageMentionOptions;
+  invalidRequestWarningInterval?: number;
+  partials?: PartialTypes[];
+  restWsBridgeTimeout?: number;
+  restTimeOffset?: number;
+  restRequestTimeout?: number;
+  restGlobalRateLimit?: number;
+  restSweepInterval?: number;
+  retryLimit?: number;
+  failIfNotExists?: boolean;
+  presence?: PresenceData;
+  waitGuildTimeout?: number;
+  sweepers?: SweeperOptions;
+  ws?: WebSocketOptions;
+  http?: HTTPOptions;
+  rejectOnRateLimit?: string[] | ((data: RateLimitData) => boolean | Promise<boolean>);
+  TOTPKey?: string;
+  startupMessage?: boolean;
+}
+
+export type ClientPresenceStatus = 'online' | 'idle' | 'dnd';
+
+export interface ClientPresenceStatusData {
+  web?: ClientPresenceStatus;
+  mobile?: ClientPresenceStatus;
+  desktop?: ClientPresenceStatus;
+}
+
+export interface ClientUserEditData {
+  username?: string;
+  avatar?: BufferResolvable | Base64Resolvable | null;
+  banner?: BufferResolvable | Base64Resolvable | null;
+  bio?: string;
+}
+
+export interface CloseEvent {
+  wasClean: boolean;
+  code: number;
+  reason: string;
+  target: WebSocket;
+}
+
+export type CollectorFilter<T extends unknown[]> = (...args: T) => boolean | Promise<boolean>;
+
+export interface CollectorOptions<T extends unknown[]> {
+  filter?: CollectorFilter<T>;
+  time?: number;
+  idle?: number;
+  dispose?: boolean;
+}
+
+export interface CollectorResetTimerOptions {
+  time?: number;
+  idle?: number;
+}
+
+export type ColorResolvable =
+  | 'DEFAULT'
+  | 'WHITE'
+  | 'AQUA'
+  | 'GREEN'
+  | 'BLUE'
+  | 'YELLOW'
+  | 'PURPLE'
+  | 'LUMINOUS_VIVID_PINK'
+  | 'FUCHSIA'
+  | 'GOLD'
+  | 'ORANGE'
+  | 'RED'
+  | 'GREY'
+  | 'DARKER_GREY'
+  | 'NAVY'
+  | 'DARK_AQUA'
+  | 'DARK_GREEN'
+  | 'DARK_BLUE'
+  | 'DARK_PURPLE'
+  | 'DARK_VIVID_PINK'
+  | 'DARK_GOLD'
+  | 'DARK_ORANGE'
+  | 'DARK_RED'
+  | 'DARK_GREY'
+  | 'LIGHT_GREY'
+  | 'DARK_NAVY'
+  | 'BLURPLE'
+  | 'GREYPLE'
+  | 'DARK_BUT_NOT_BLACK'
+  | 'NOT_QUITE_BLACK'
+  | 'RANDOM'
+  | readonly [number, number, number]
+  | number
+  | HexColorString;
+
+export interface CommandInteractionOption<Cached extends CacheType = CacheType> {
+  name: string;
+  type: ApplicationCommandOptionType;
+  value?: string | number | boolean;
+  focused?: boolean;
+  autocomplete?: boolean;
+  options?: CommandInteractionOption[];
+  user?: User;
+  member?: CacheTypeReducer<Cached, GuildMember, APIInteractionDataResolvedGuildMember>;
+  channel?: CacheTypeReducer<Cached, GuildBasedChannel, APIInteractionDataResolvedChannel>;
+  role?: CacheTypeReducer<Cached, Role, APIRole>;
+  message?: GuildCacheMessage<Cached>;
+  attachment?: MessageAttachment;
+}
+
+export interface CommandInteractionResolvedData<Cached extends CacheType = CacheType> {
+  users?: Collection<Snowflake, User>;
+  members?: Collection<Snowflake, CacheTypeReducer<Cached, GuildMember, APIInteractionDataResolvedGuildMember>>;
+  roles?: Collection<Snowflake, CacheTypeReducer<Cached, Role, APIRole>>;
+  channels?: Collection<Snowflake, CacheTypeReducer<Cached, AnyChannel, APIInteractionDataResolvedChannel>>;
+  messages?: Collection<Snowflake, CacheTypeReducer<Cached, Message, APIMessage>>;
+  attachments?: Collection<Snowflake, MessageAttachment>;
+}
+
+export interface ConstantsClientApplicationAssetTypes {
+  SMALL: 1;
+  BIG: 2;
+}
+
+export type AutocompleteFocusedOption = Pick<CommandInteractionOption, 'name'> & {
+  focused: true;
+  type:
+  | 'STRING'
+  | 'INTEGER'
+  | 'NUMBER'
+  | ApplicationCommandOptionTypes.STRING
+  | ApplicationCommandOptionTypes.INTEGER
+  | ApplicationCommandOptionTypes.NUMBER;
+  value: string;
+};
+
+export interface ConstantsColors {
+  DEFAULT: 0x000000;
+  WHITE: 0xffffff;
+  AQUA: 0x1abc9c;
+  GREEN: 0x57f287;
+  BLUE: 0x3498db;
+  YELLOW: 0xfee75c;
+  PURPLE: 0x9b59b6;
+  LUMINOUS_VIVID_PINK: 0xe91e63;
+  FUCHSIA: 0xeb459e;
+  GOLD: 0xf1c40f;
+  ORANGE: 0xe67e22;
+  RED: 0xed4245;
+  GREY: 0x95a5a6;
+  NAVY: 0x34495e;
+  DARK_AQUA: 0x11806a;
+  DARK_GREEN: 0x1f8b4c;
+  DARK_BLUE: 0x206694;
+  DARK_PURPLE: 0x71368a;
+  DARK_VIVID_PINK: 0xad1457;
+  DARK_GOLD: 0xc27c0e;
+  DARK_ORANGE: 0xa84300;
+  DARK_RED: 0x992d22;
+  DARK_GREY: 0x979c9f;
+  DARKER_GREY: 0x7f8c8d;
+  LIGHT_GREY: 0xbcc0c0;
+  DARK_NAVY: 0x2c3e50;
+  BLURPLE: 0x5865f2;
+  GREYPLE: 0x99aab5;
+  DARK_BUT_NOT_BLACK: 0x2c2f33;
+  NOT_QUITE_BLACK: 0x23272a;
+}
+
+export interface ConstantsEvents {
+  RATE_LIMIT: 'rateLimit';
+  INVALID_REQUEST_WARNING: 'invalidRequestWarning';
+  API_RESPONSE: 'apiResponse';
+  API_REQUEST: 'apiRequest';
+  CLIENT_READY: 'ready';
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  APPLICATION_COMMAND_CREATE: 'applicationCommandCreate';
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  APPLICATION_COMMAND_DELETE: 'applicationCommandDelete';
+  APPLICATION_COMMAND_PERMISSIONS_UPDATE: 'applicationCommandPermissionsUpdate';
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  APPLICATION_COMMAND_UPDATE: 'applicationCommandUpdate';
+  /** @deprecated This event is not received by user accounts. */
+  AUTO_MODERATION_ACTION_EXECUTION: 'autoModerationActionExecution';
+  /** @deprecated This event is not received by user accounts. */
+  AUTO_MODERATION_RULE_CREATE: 'autoModerationRuleCreate';
+  /** @deprecated This event is not received by user accounts. */
+  AUTO_MODERATION_RULE_DELETE: 'autoModerationRuleDelete';
+  /** @deprecated This event is not received by user accounts. */
+  AUTO_MODERATION_RULE_UPDATE: 'autoModerationRuleUpdate';
+  GUILD_AVAILABLE: 'guildAvailable';
+  GUILD_CREATE: 'guildCreate';
+  GUILD_DELETE: 'guildDelete';
+  GUILD_UPDATE: 'guildUpdate';
+  GUILD_UNAVAILABLE: 'guildUnavailable';
+  GUILD_MEMBER_ADD: 'guildMemberAdd';
+  GUILD_MEMBER_REMOVE: 'guildMemberRemove';
+  GUILD_MEMBER_UPDATE: 'guildMemberUpdate';
+  GUILD_MEMBER_AVAILABLE: 'guildMemberAvailable';
+  GUILD_MEMBERS_CHUNK: 'guildMembersChunk';
+  GUILD_INTEGRATIONS_UPDATE: 'guildIntegrationsUpdate';
+  GUILD_ROLE_CREATE: 'roleCreate';
+  GUILD_ROLE_DELETE: 'roleDelete';
+  INVITE_CREATE: 'inviteCreate';
+  INVITE_DELETE: 'inviteDelete';
+  GUILD_ROLE_UPDATE: 'roleUpdate';
+  GUILD_EMOJI_CREATE: 'emojiCreate';
+  GUILD_EMOJI_DELETE: 'emojiDelete';
+  GUILD_EMOJI_UPDATE: 'emojiUpdate';
+  GUILD_BAN_ADD: 'guildBanAdd';
+  GUILD_BAN_REMOVE: 'guildBanRemove';
+  CHANNEL_CREATE: 'channelCreate';
+  CHANNEL_DELETE: 'channelDelete';
+  CHANNEL_UPDATE: 'channelUpdate';
+  CHANNEL_PINS_UPDATE: 'channelPinsUpdate';
+  MESSAGE_CREATE: 'messageCreate';
+  MESSAGE_DELETE: 'messageDelete';
+  MESSAGE_UPDATE: 'messageUpdate';
+  MESSAGE_BULK_DELETE: 'messageDeleteBulk';
+  MESSAGE_REACTION_ADD: 'messageReactionAdd';
+  MESSAGE_REACTION_REMOVE: 'messageReactionRemove';
+  MESSAGE_REACTION_REMOVE_ALL: 'messageReactionRemoveAll';
+  MESSAGE_REACTION_REMOVE_EMOJI: 'messageReactionRemoveEmoji';
+  THREAD_CREATE: 'threadCreate';
+  THREAD_DELETE: 'threadDelete';
+  THREAD_UPDATE: 'threadUpdate';
+  THREAD_LIST_SYNC: 'threadListSync';
+  THREAD_MEMBER_UPDATE: 'threadMemberUpdate';
+  THREAD_MEMBERS_UPDATE: 'threadMembersUpdate';
+  USER_UPDATE: 'userUpdate';
+  PRESENCE_UPDATE: 'presenceUpdate';
+  VOICE_CHANNEL_EFFECT_SEND: 'voiceChannelEffectSend';
+  VOICE_SERVER_UPDATE: 'voiceServerUpdate';
+  VOICE_STATE_UPDATE: 'voiceStateUpdate';
+  TYPING_START: 'typingStart';
+  WEBHOOKS_UPDATE: 'webhookUpdate';
+  ERROR: 'error';
+  WARN: 'warn';
+  DEBUG: 'debug';
+  CACHE_SWEEP: 'cacheSweep';
+  SHARD_DISCONNECT: 'shardDisconnect';
+  SHARD_ERROR: 'shardError';
+  SHARD_RECONNECTING: 'shardReconnecting';
+  SHARD_READY: 'shardReady';
+  SHARD_RESUME: 'shardResume';
+  INVALIDATED: 'invalidated';
+  RAW: 'raw';
+  STAGE_INSTANCE_CREATE: 'stageInstanceCreate';
+  STAGE_INSTANCE_UPDATE: 'stageInstanceUpdate';
+  STAGE_INSTANCE_DELETE: 'stageInstanceDelete';
+  GUILD_STICKER_CREATE: 'stickerCreate';
+  GUILD_STICKER_DELETE: 'stickerDelete';
+  GUILD_STICKER_UPDATE: 'stickerUpdate';
+  GUILD_SCHEDULED_EVENT_CREATE: 'guildScheduledEventCreate';
+  GUILD_SCHEDULED_EVENT_UPDATE: 'guildScheduledEventUpdate';
+  GUILD_SCHEDULED_EVENT_DELETE: 'guildScheduledEventDelete';
+  GUILD_SCHEDULED_EVENT_USER_ADD: 'guildScheduledEventUserAdd';
+  GUILD_SCHEDULED_EVENT_USER_REMOVE: 'guildScheduledEventUserRemove';
+  GUILD_AUDIT_LOG_ENTRY_CREATE: 'guildAuditLogEntryCreate';
+  UNHANDLED_PACKET: 'unhandledPacket';
+  RELATIONSHIP_ADD: 'relationshipAdd';
+  RELATIONSHIP_UPDATE: 'relationshipUpdate';
+  RELATIONSHIP_REMOVE: 'relationshipRemove';
+  CHANNEL_RECIPIENT_ADD: 'channelRecipientAdd';
+  CHANNEL_RECIPIENT_REMOVE: 'channelRecipientRemove';
+  INTERACTION_MODAL_CREATE: 'interactionModalCreate';
+  CALL_CREATE: 'callCreate';
+  CALL_UPDATE: 'callUpdate';
+  CALL_DELETE: 'callDelete';
+  MESSAGE_POLL_VOTE_ADD: 'messagePollVoteAdd';
+  MESSAGE_POLL_VOTE_REMOVE: 'messagePollVoteRemove';
+}
+
+export interface ConstantsVoiceOpcodes {
+  IDENTIFY: 0;
+  SELECT_PROTOCOL: 1;
+  READY: 2;
+  HEARTBEAT: 3;
+  SESSION_DESCRIPTION: 4;
+  SPEAKING: 5;
+  HEARTBEAT_ACK: 6;
+  RESUME: 7;
+  HELLO: 8;
+  RESUMED: 9;
+  SOURCES: 12;
+  CLIENT_DISCONNECT: 13;
+  SESSION_UPDATE: 14;
+  MEDIA_SINK_WANTS: 15;
+  VOICE_BACKEND_VERSION: 16;
+  CHANNEL_OPTIONS_UPDATE: 17;
+}
+
+export interface ConstantsOpcodes {
+  DISPATCH: 0;
+  HEARTBEAT: 1;
+  IDENTIFY: 2;
+  STATUS_UPDATE: 3;
+  VOICE_STATE_UPDATE: 4;
+  VOICE_GUILD_PING: 5;
+  RESUME: 6;
+  RECONNECT: 7;
+  REQUEST_GUILD_MEMBERS: 8;
+  INVALID_SESSION: 9;
+  HELLO: 10;
+  HEARTBEAT_ACK: 11;
+  GUILD_SYNC: 12;
+  DM_UPDATE: 13;
+  GUILD_SUBSCRIPTIONS: 14;
+  LOBBY_CONNECT: 15;
+  LOBBY_DISCONNECT: 16;
+  LOBBY_VOICE_STATE_UPDATE: 17;
+  STREAM_CREATE: 18;
+  STREAM_DELETE: 19;
+  STREAM_WATCH: 20;
+  STREAM_PING: 21;
+  STREAM_SET_PAUSED: 22;
+  REQUEST_GUILD_APPLICATION_COMMANDS: 24;
+  EMBEDDED_ACTIVITY_LAUNCH: 25;
+  EMBEDDED_ACTIVITY_CLOSE: 26;
+  EMBEDDED_ACTIVITY_UPDATE: 27;
+  REQUEST_FORUM_UNREADS: 28;
+  REMOTE_COMMAND: 29;
+  GET_DELETED_ENTITY_IDS_NOT_MATCHING_HASH: 30;
+  REQUEST_SOUNDBOARD_SOUNDS: 31;
+  SPEED_TEST_CREATE: 32;
+  SPEED_TEST_DELETE: 33;
+  REQUEST_LAST_MESSAGES: 34;
+  SEARCH_RECENT_MEMBERS: 35;
+  REQUEST_CHANNEL_STATUSES: 36;
+  GUILD_SUBSCRIPTIONS_BULK: 37;
+}
+
+export interface ConstantsShardEvents {
+  CLOSE: 'close';
+  DESTROYED: 'destroyed';
+  INVALID_SESSION: 'invalidSession';
+  READY: 'ready';
+  RESUMED: 'resumed';
+  ALL_READY: 'allReady';
+}
+
+export interface ConstantsStatus {
+  READY: 0;
+  CONNECTING: 1;
+  RECONNECTING: 2;
+  IDLE: 3;
+  NEARLY: 4;
+  DISCONNECTED: 5;
+  WAITING_FOR_GUILDS: 6;
+  IDENTIFYING: 7;
+  RESUMING: 8;
+}
+
+export interface CreateGuildScheduledEventInviteURLOptions extends CreateInviteOptions {
+  channel?: GuildInvitableChannelResolvable;
+}
+
+export interface CreateRoleOptions extends RoleData {
+  reason?: string;
+}
+
+export interface StageInstanceCreateOptions {
+  topic: string;
+  privacyLevel?: PrivacyLevel | number;
+  sendStartNotification?: boolean;
+  guildScheduledEvent?: GuildScheduledEventResolvable;
+}
+
+export interface CrosspostedChannel {
+  channelId: Snowflake;
+  guildId: Snowflake;
+  type: keyof typeof ChannelTypes;
+  name: string;
+}
+
+export type DateResolvable = Date | number | string;
+
+export interface DeconstructedSnowflake {
+  timestamp: number;
+  readonly date: Date;
+  workerId: number;
+  processId: number;
+  increment: number;
+  binary: string;
+}
+
+export type DefaultMessageNotificationLevel = keyof typeof DefaultMessageNotificationLevels;
+
+export type DynamicImageFormat = AllowedImageFormat | 'gif';
+
+export interface EditGuildTemplateOptions {
+  name?: string;
+  description?: string;
+}
+
+export interface EmbedAuthorData {
+  name: string;
+  url?: string;
+  iconURL?: string;
+}
+
+export interface EmbedField {
+  name: string;
+  value: string;
+  inline: boolean;
+}
+
+export interface EmbedFieldData {
+  name: string;
+  value: string;
+  inline?: boolean;
+}
+
+export interface EmbedFooterData {
+  text: string;
+  iconURL?: string;
+}
+
+export type EmojiIdentifierResolvable =
+  | EmojiResolvable
+  | `${'' | 'a:'}${string}:${Snowflake}`
+  | `<${'' | 'a'}:${string}:${Snowflake}>`
+  | string;
+
+export type EmojiResolvable = Snowflake | GuildEmoji | ReactionEmoji;
+
+export interface ErrorEvent {
+  error: unknown;
+  message: string;
+  type: string;
+  target: WebSocket;
+}
+
+export interface EscapeMarkdownOptions {
+  codeBlock?: boolean;
+  inlineCode?: boolean;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strikethrough?: boolean;
+  spoiler?: boolean;
+  codeBlockContent?: boolean;
+  inlineCodeContent?: boolean;
+  escape?: boolean;
+  heading?: boolean;
+  bulletedList?: boolean;
+  numberedList?: boolean;
+  maskedLink?: boolean;
+}
+
+export type ExplicitContentFilterLevel = keyof typeof ExplicitContentFilterLevels;
+
+export interface FetchApplicationCommandOptions extends BaseFetchOptions {
+  guildId?: Snowflake;
+  locale?: LocaleString;
+  withLocalizations?: boolean;
+}
+
+export interface FetchArchivedThreadOptions {
+  type?: 'public' | 'private';
+  fetchAll?: boolean;
+  before?: ThreadChannelResolvable | DateResolvable;
+  limit?: number;
+}
+
+export interface FetchChannelThreadsOptions {
+  archived?: boolean;
+  limit?: number;
+  offset?: number;
+  sort_by?: string;
+  sort_order?: string;
+}
+
+export interface FetchBanOptions extends BaseFetchOptions {
+  user: UserResolvable;
+}
+
+export interface FetchBansOptions {
+  limit?: number;
+  before?: Snowflake;
+  after?: Snowflake;
+  cache?: boolean;
+}
+
+export interface FetchChannelOptions extends BaseFetchOptions {
+  allowUnknownGuild?: boolean;
+}
+
+export interface FetchedThreads {
+  threads: Collection<Snowflake, ThreadChannel>;
+  hasMore?: boolean;
+}
+
+export interface FetchGuildOptions extends BaseFetchOptions {
+  guild: GuildResolvable;
+  withCounts?: boolean;
+}
+
+export interface FetchGuildsOptions {
+  before?: Snowflake;
+  after?: Snowflake;
+  limit?: number;
+}
+
+export interface FetchGuildScheduledEventOptions extends BaseFetchOptions {
+  guildScheduledEvent: GuildScheduledEventResolvable;
+  withUserCount?: boolean;
+}
+
+export interface FetchGuildScheduledEventsOptions {
+  cache?: boolean;
+  withUserCount?: boolean;
+}
+
+export interface FetchGuildScheduledEventSubscribersOptions {
+  limit?: number;
+  withMember?: boolean;
+}
+
+interface FetchInviteOptions extends BaseFetchOptions {
+  code: string;
+}
+
+interface FetchInvitesOptions {
+  channelId?: GuildInvitableChannelResolvable;
+  cache?: boolean;
+}
+
+export interface FetchMemberOptions extends BaseFetchOptions {
+  user: UserResolvable;
+}
+
+export interface FetchMembersOptions {
+  user?: UserResolvable | UserResolvable[];
+  query?: string;
+  limit?: number;
+  withPresences?: boolean;
+  time?: number;
+  nonce?: string;
+  force?: boolean;
+}
+
+export interface FetchReactionUsersOptions {
+  type?: ReactionTypes;
+  limit?: number;
+  after?: Snowflake;
+}
+
+export interface FetchThreadMemberOptions extends BaseFetchOptions {
+  withMember?: boolean;
+}
+
+export interface FetchThreadMembersWithGuildMemberDataOptions {
+  withMember: true;
+  after?: Snowflake;
+  limit?: number;
+  cache?: boolean;
+}
+
+export interface FetchThreadMembersWithoutGuildMemberDataOptions {
+  withMember?: false;
+  cache?: boolean;
+}
+
+export type FetchThreadMembersOptions =
+  | FetchThreadMembersWithGuildMemberDataOptions
+  | FetchThreadMembersWithoutGuildMemberDataOptions;
+
+export interface FetchThreadsOptions {
+  archived?: FetchArchivedThreadOptions;
+}
+
+export interface FileOptions {
+  attachment: BufferResolvable | Stream;
+  name?: string;
+  description?: string;
+}
+
+export type GlobalSweepFilter<K, V> = () => ((value: V, key: K, collection: Collection<K, V>) => boolean) | null;
+
+export interface GuildApplicationCommandPermissionData {
+  id: Snowflake;
+  permissions: ApplicationCommandPermissionData[];
+}
+
+interface GuildAuditLogsTypes {
+  GUILD_UPDATE: ['GUILD', 'UPDATE'];
+  CHANNEL_CREATE: ['CHANNEL', 'CREATE'];
+  CHANNEL_UPDATE: ['CHANNEL', 'UPDATE'];
+  CHANNEL_DELETE: ['CHANNEL', 'DELETE'];
+  CHANNEL_OVERWRITE_CREATE: ['CHANNEL', 'CREATE'];
+  CHANNEL_OVERWRITE_UPDATE: ['CHANNEL', 'UPDATE'];
+  CHANNEL_OVERWRITE_DELETE: ['CHANNEL', 'DELETE'];
+  MEMBER_KICK: ['USER', 'DELETE'];
+  MEMBER_PRUNE: ['USER', 'DELETE'];
+  MEMBER_BAN_ADD: ['USER', 'DELETE'];
+  MEMBER_BAN_REMOVE: ['USER', 'CREATE'];
+  MEMBER_UPDATE: ['USER', 'UPDATE'];
+  MEMBER_ROLE_UPDATE: ['USER', 'UPDATE'];
+  MEMBER_MOVE: ['USER', 'UPDATE'];
+  MEMBER_DISCONNECT: ['USER', 'DELETE'];
+  BOT_ADD: ['USER', 'CREATE'];
+  ROLE_CREATE: ['ROLE', 'CREATE'];
+  ROLE_UPDATE: ['ROLE', 'UPDATE'];
+  ROLE_DELETE: ['ROLE', 'DELETE'];
+  INVITE_CREATE: ['INVITE', 'CREATE'];
+  INVITE_UPDATE: ['INVITE', 'UPDATE'];
+  INVITE_DELETE: ['INVITE', 'DELETE'];
+  WEBHOOK_CREATE: ['WEBHOOK', 'CREATE'];
+  WEBHOOK_UPDATE: ['WEBHOOK', 'UPDATE'];
+  WEBHOOK_DELETE: ['WEBHOOK', 'DELETE'];
+  EMOJI_CREATE: ['EMOJI', 'CREATE'];
+  EMOJI_UPDATE: ['EMOJI', 'UPDATE'];
+  EMOJI_DELETE: ['EMOJI', 'DELETE'];
+  MESSAGE_DELETE: ['MESSAGE', 'DELETE'];
+  MESSAGE_BULK_DELETE: ['MESSAGE', 'DELETE'];
+  MESSAGE_PIN: ['MESSAGE', 'CREATE'];
+  MESSAGE_UNPIN: ['MESSAGE', 'DELETE'];
+  INTEGRATION_CREATE: ['INTEGRATION', 'CREATE'];
+  INTEGRATION_UPDATE: ['INTEGRATION', 'UPDATE'];
+  INTEGRATION_DELETE: ['INTEGRATION', 'DELETE'];
+  STAGE_INSTANCE_CREATE: ['STAGE_INSTANCE', 'CREATE'];
+  STAGE_INSTANCE_UPDATE: ['STAGE_INSTANCE', 'UPDATE'];
+  STAGE_INSTANCE_DELETE: ['STAGE_INSTANCE', 'DELETE'];
+  STICKER_CREATE: ['STICKER', 'CREATE'];
+  STICKER_UPDATE: ['STICKER', 'UPDATE'];
+  STICKER_DELETE: ['STICKER', 'DELETE'];
+  GUILD_SCHEDULED_EVENT_CREATE: ['GUILD_SCHEDULED_EVENT', 'CREATE'];
+  GUILD_SCHEDULED_EVENT_UPDATE: ['GUILD_SCHEDULED_EVENT', 'UPDATE'];
+  GUILD_SCHEDULED_EVENT_DELETE: ['GUILD_SCHEDULED_EVENT', 'DELETE'];
+  THREAD_CREATE: ['THREAD', 'CREATE'];
+  THREAD_UPDATE: ['THREAD', 'UPDATE'];
+  THREAD_DELETE: ['THREAD', 'DELETE'];
+  APPLICATION_COMMAND_PERMISSION_UPDATE: ['APPLICATION_COMMAND_PERMISSION', 'UPDATE'];
+  AUTO_MODERATION_RULE_CREATE: ['AUTO_MODERATION', 'CREATE'];
+  AUTO_MODERATION_RULE_UPDATE: ['AUTO_MODERATION', 'UPDATE'];
+  AUTO_MODERATION_RULE_DELETE: ['AUTO_MODERATION', 'DELETE'];
+  AUTO_MODERATION_BLOCK_MESSAGE: ['AUTO_MODERATION', 'CREATE'];
+  AUTO_MODERATION_FLAG_TO_CHANNEL: ['AUTO_MODERATION', 'CREATE'];
+  AUTO_MODERATION_USER_COMMUNICATION_DISABLED: ['AUTO_MODERATION', 'CREATE'];
+}
+
+export interface GuildAuditLogsIds {
+  1: 'GUILD_UPDATE';
+  10: 'CHANNEL_CREATE';
+  11: 'CHANNEL_UPDATE';
+  12: 'CHANNEL_DELETE';
+  13: 'CHANNEL_OVERWRITE_CREATE';
+  14: 'CHANNEL_OVERWRITE_UPDATE';
+  15: 'CHANNEL_OVERWRITE_DELETE';
+  20: 'MEMBER_KICK';
+  21: 'MEMBER_PRUNE';
+  22: 'MEMBER_BAN_ADD';
+  23: 'MEMBER_BAN_REMOVE';
+  24: 'MEMBER_UPDATE';
+  25: 'MEMBER_ROLE_UPDATE';
+  26: 'MEMBER_MOVE';
+  27: 'MEMBER_DISCONNECT';
+  28: 'BOT_ADD';
+  30: 'ROLE_CREATE';
+  31: 'ROLE_UPDATE';
+  32: 'ROLE_DELETE';
+  40: 'INVITE_CREATE';
+  41: 'INVITE_UPDATE';
+  42: 'INVITE_DELETE';
+  50: 'WEBHOOK_CREATE';
+  51: 'WEBHOOK_UPDATE';
+  52: 'WEBHOOK_DELETE';
+  60: 'EMOJI_CREATE';
+  61: 'EMOJI_UPDATE';
+  62: 'EMOJI_DELETE';
+  72: 'MESSAGE_DELETE';
+  73: 'MESSAGE_BULK_DELETE';
+  74: 'MESSAGE_PIN';
+  75: 'MESSAGE_UNPIN';
+  80: 'INTEGRATION_CREATE';
+  81: 'INTEGRATION_UPDATE';
+  82: 'INTEGRATION_DELETE';
+  83: 'STAGE_INSTANCE_CREATE';
+  84: 'STAGE_INSTANCE_UPDATE';
+  85: 'STAGE_INSTANCE_DELETE';
+  90: 'STICKER_CREATE';
+  91: 'STICKER_UPDATE';
+  92: 'STICKER_DELETE';
+  100: 'GUILD_SCHEDULED_EVENT_CREATE';
+  101: 'GUILD_SCHEDULED_EVENT_UPDATE';
+  102: 'GUILD_SCHEDULED_EVENT_DELETE';
+  110: 'THREAD_CREATE';
+  111: 'THREAD_UPDATE';
+  112: 'THREAD_DELETE';
+  121: 'APPLICATION_COMMAND_PERMISSION_UPDATE';
+  140: 'AUTO_MODERATION_RULE_CREATE';
+  141: 'AUTO_MODERATION_RULE_UPDATE';
+  142: 'AUTO_MODERATION_RULE_DELETE';
+  143: 'AUTO_MODERATION_BLOCK_MESSAGE';
+  144: 'AUTO_MODERATION_FLAG_TO_CHANNEL';
+  145: 'AUTO_MODERATION_USER_COMMUNICATION_DISABLED';
+}
+
+export type GuildAuditLogsActions = { [Key in keyof GuildAuditLogsIds as GuildAuditLogsIds[Key]]: Key } & { ALL: null };
+
+export type GuildAuditLogsAction = keyof GuildAuditLogsActions;
+
+export type GuildAuditLogsActionType = GuildAuditLogsTypes[keyof GuildAuditLogsTypes][1] | 'ALL';
+
+export interface GuildAuditLogsEntryExtraField {
+  MEMBER_PRUNE: { removed: number; days: number };
+  MEMBER_MOVE: { channel: VoiceBasedChannel | { id: Snowflake }; count: number };
+  MESSAGE_DELETE: { channel: GuildTextBasedChannel | { id: Snowflake }; count: number };
+  MESSAGE_BULK_DELETE: { channel: GuildTextBasedChannel | { id: Snowflake }; count: number };
+  MESSAGE_PIN: { channel: GuildTextBasedChannel | { id: Snowflake }; messageId: Snowflake };
+  MESSAGE_UNPIN: { channel: GuildTextBasedChannel | { id: Snowflake }; messageId: Snowflake };
+  MEMBER_DISCONNECT: { count: number };
+  CHANNEL_OVERWRITE_CREATE:
+  | Role
+  | GuildMember
+  | { id: Snowflake; name: string; type: OverwriteTypes.role }
+  | { id: Snowflake; type: OverwriteTypes.member };
+  CHANNEL_OVERWRITE_UPDATE:
+  | Role
+  | GuildMember
+  | { id: Snowflake; name: string; type: OverwriteTypes.role }
+  | { id: Snowflake; type: OverwriteTypes.member };
+  CHANNEL_OVERWRITE_DELETE:
+  | Role
+  | GuildMember
+  | { id: Snowflake; name: string; type: OverwriteTypes.role }
+  | { id: Snowflake; type: OverwriteTypes.member };
+  STAGE_INSTANCE_CREATE: StageChannel | { id: Snowflake };
+  STAGE_INSTANCE_DELETE: StageChannel | { id: Snowflake };
+  STAGE_INSTANCE_UPDATE: StageChannel | { id: Snowflake };
+  APPLICATION_COMMAND_PERMISSION_UPDATE: {
+    applicationId: Snowflake;
+  };
+  AUTO_MODERATION_BLOCK_MESSAGE: {
+    autoModerationRuleName: string;
+    autoModerationRuleTriggerType: AutoModerationRuleTriggerType;
+    channel: GuildTextBasedChannel | { id: Snowflake };
+  };
+  AUTO_MODERATION_FLAG_TO_CHANNEL: {
+    autoModerationRuleName: string;
+    autoModerationRuleTriggerType: AutoModerationRuleTriggerType;
+    channel: GuildTextBasedChannel | { id: Snowflake };
+  };
+  AUTO_MODERATION_USER_COMMUNICATIONDISABLED: {
+    autoModerationRuleName: string;
+    autoModerationRuleTriggerType: AutoModerationRuleTriggerType;
+    channel: GuildTextBasedChannel | { id: Snowflake };
+  };
+}
+
+export interface GuildAuditLogsEntryTargetField<TActionType extends GuildAuditLogsActionType> {
+  USER: User | null;
+  GUILD: Guild;
+  WEBHOOK: Webhook;
+  INVITE: Invite;
+  MESSAGE: TActionType extends 'MESSAGE_BULK_DELETE' ? Guild | { id: Snowflake } : User;
+  INTEGRATION: Integration;
+  CHANNEL: NonThreadGuildBasedChannel | { id: Snowflake;[x: string]: unknown };
+  THREAD: ThreadChannel | { id: Snowflake;[x: string]: unknown };
+  STAGE_INSTANCE: StageInstance;
+  STICKER: Sticker;
+  GUILD_SCHEDULED_EVENT: GuildScheduledEvent;
+  APPLICATION_COMMAND: ApplicationCommand | { id: Snowflake };
+  AUTO_MODERATION: AutoModerationRule;
+}
+
+export interface GuildAuditLogsFetchOptions<T extends GuildAuditLogsResolvable> {
+  before?: Snowflake | GuildAuditLogsEntry;
+  after?: Snowflake | GuildAuditLogsEntry;
+  limit?: number;
+  user?: UserResolvable;
+  type?: T;
+}
+
+export type GuildAuditLogsResolvable = keyof GuildAuditLogsIds | GuildAuditLogsAction | null;
+
+export type GuildAuditLogsTarget = GuildAuditLogsTypes[keyof GuildAuditLogsTypes][0] | 'ALL' | 'UNKNOWN';
+
+export type GuildAuditLogsTargets = {
+  [Key in GuildAuditLogsTarget]?: string;
+};
+
+export type GuildBanResolvable = GuildBan | UserResolvable;
+
+export interface GuildChannelOverwriteOptions {
+  reason?: string;
+  type?: number;
+}
+
+export type GuildChannelResolvable = Snowflake | GuildBasedChannel;
+
+export interface GuildChannelCreateOptions extends Omit<CategoryCreateChannelOptions, 'type'> {
+  parent?: CategoryChannelResolvable;
+  type?: ExcludeEnum<
+    typeof ChannelTypes,
+    'DM' | 'GROUP_DM' | 'UNKNOWN' | 'GUILD_PUBLIC_THREAD' | 'GUILD_NEWS_THREAD' | 'GUILD_PRIVATE_THREAD'
+  >;
+}
+
+export interface GuildChannelCloneOptions extends GuildChannelCreateOptions {
+  name?: string;
+}
+
+export interface GuildChannelOverwriteOptions {
+  reason?: string;
+  type?: number;
+}
+
+export interface GuildCreateOptions {
+  afkChannelId?: Snowflake | number;
+  afkTimeout?: number;
+  channels?: PartialChannelData[];
+  defaultMessageNotifications?: DefaultMessageNotificationLevel | number;
+  explicitContentFilter?: ExplicitContentFilterLevel | number;
+  icon?: BufferResolvable | Base64Resolvable | null;
+  roles?: PartialRoleData[];
+  systemChannelFlags?: SystemChannelFlagsResolvable;
+  systemChannelId?: Snowflake | number;
+  verificationLevel?: VerificationLevel | number;
+}
+
+export interface GuildWidgetSettings {
+  enabled: boolean;
+  channel: NonThreadGuildBasedChannel | null;
+}
+
+export interface GuildEditData {
+  name?: string;
+  verificationLevel?: VerificationLevel | number | null;
+  explicitContentFilter?: ExplicitContentFilterLevel | number | null;
+  defaultMessageNotifications?: DefaultMessageNotificationLevel | number | null;
+  afkChannel?: VoiceChannelResolvable | null;
+  systemChannel?: TextChannelResolvable | null;
+  systemChannelFlags?: SystemChannelFlagsResolvable;
+  afkTimeout?: number;
+  icon?: BufferResolvable | Base64Resolvable | null;
+  owner?: GuildMemberResolvable;
+  splash?: BufferResolvable | Base64Resolvable | null;
+  discoverySplash?: BufferResolvable | Base64Resolvable | null;
+  banner?: BufferResolvable | Base64Resolvable | null;
+  rulesChannel?: TextChannelResolvable | null;
+  publicUpdatesChannel?: TextChannelResolvable | null;
+  preferredLocale?: string | null;
+  safetyAlertsChannel?: TextChannelResolvable | null;
+  premiumProgressBarEnabled?: boolean;
+  description?: string | null;
+  features?: GuildFeatures[];
+}
+
+export interface GroupDMChannelEditData {
+  name?: string;
+  icon?: BufferResolvable | Base64Resolvable | null;
+  owner?: UserResolvable;
+}
+
+export interface GuildEmojiCreateOptions {
+  roles?: Collection<Snowflake, Role> | RoleResolvable[];
+  reason?: string;
+}
+
+export interface GuildEmojiEditData {
+  name?: string;
+  roles?: Collection<Snowflake, Role> | RoleResolvable[];
+}
+
+export interface GuildStickerCreateOptions {
+  description?: string | null;
+  reason?: string;
+}
+
+export interface GuildStickerEditData {
+  name?: string;
+  description?: string | null;
+  tags?: string;
+}
+
+export type GuildFeatures =
+  | 'ANIMATED_ICON'
+  | 'AUTO_MODERATION'
+  | 'BANNER'
+  | 'COMMERCE'
+  | 'COMMUNITY'
+  | 'CREATOR_MONETIZABLE_PROVISIONAL'
+  | 'CREATOR_STORE_PAGE'
+  | 'DISCOVERABLE'
+  | 'FEATURABLE'
+  | 'INVITES_DISABLED'
+  | 'INVITE_SPLASH'
+  | 'MEMBER_VERIFICATION_GATE_ENABLED'
+  | 'NEWS'
+  | 'PARTNERED'
+  | 'PREVIEW_ENABLED'
+  | 'VANITY_URL'
+  | 'VERIFIED'
+  | 'VIP_REGIONS'
+  | 'WELCOME_SCREEN_ENABLED'
+  | 'TICKETED_EVENTS_ENABLED'
+  | 'MORE_STICKERS'
+  | 'THREE_DAY_THREAD_ARCHIVE'
+  | 'SEVEN_DAY_THREAD_ARCHIVE'
+  | 'PRIVATE_THREADS'
+  | 'ROLE_ICONS'
+  | 'RAID_ALERTS_DISABLED'
+  | 'ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE'
+  | 'ROLE_SUBSCRIPTIONS_ENABLED';
+
+export interface GuildMemberEditData {
+  nick?: string | null;
+  roles?: Collection<Snowflake, Role> | readonly RoleResolvable[];
+  mute?: boolean;
+  deaf?: boolean;
+  channel?: GuildVoiceChannelResolvable | null;
+  communicationDisabledUntil?: DateResolvable | null;
+  flags?: GuildMemberFlagsResolvable;
+  avatar?: BufferResolvable | Base64Resolvable | null;
+  banner?: BufferResolvable | Base64Resolvable | null;
+  bio?: string | null;
+}
+
+export type GuildMemberFlagsString =
+  | 'DID_REJOIN'
+  | 'COMPLETED_ONBOARDING'
+  | 'BYPASSES_VERIFICATION'
+  | 'STARTED_ONBOARDING';
+
+export type GuildMemberFlagsResolvable = BitFieldResolvable<GuildMemberFlagsString, number>;
+
+export type GuildMemberResolvable = GuildMember | UserResolvable;
+
+export type GuildResolvable = Guild | NonThreadGuildBasedChannel | GuildMember | GuildEmoji | Invite | Role | Snowflake;
+
+export interface GuildPruneMembersOptions {
+  count?: boolean;
+  days?: number;
+  dry?: boolean;
+  reason?: string;
+  roles?: RoleResolvable[];
+}
+
+export interface GuildWidgetSettingsData {
+  enabled: boolean;
+  channel: GuildChannelResolvable | null;
+}
+
+export interface GuildSearchMembersOptions {
+  query: string;
+  limit?: number;
+  cache?: boolean;
+}
+
+// TODO: use conditional types for better TS support
+export interface GuildScheduledEventCreateOptions {
+  name: string;
+  scheduledStartTime: DateResolvable;
+  scheduledEndTime?: DateResolvable;
+  privacyLevel: GuildScheduledEventPrivacyLevel | number;
+  entityType: GuildScheduledEventEntityType | number;
+  description?: string;
+  channel?: GuildVoiceChannelResolvable;
+  entityMetadata?: GuildScheduledEventEntityMetadataOptions;
+  image?: BufferResolvable | Base64Resolvable | null;
+  reason?: string;
+  recurrenceRule?: GuildScheduledEventRecurrenceRuleOptions;
+}
+
+export type GuildScheduledEventRecurrenceRuleOptions =
+  | BaseGuildScheduledEventRecurrenceRuleOptions<
+    GuildScheduledEventRecurrenceRuleFrequency.Yearly,
+    {
+      byMonth: readonly GuildScheduledEventRecurrenceRuleMonth[];
+      byMonthDay: readonly number[];
+    }
+  >
+  | BaseGuildScheduledEventRecurrenceRuleOptions<
+    GuildScheduledEventRecurrenceRuleFrequency.Monthly,
+    {
+      byNWeekday: readonly GuildScheduledEventRecurrenceRuleNWeekday[];
+    }
+  >
+  | BaseGuildScheduledEventRecurrenceRuleOptions<
+    GuildScheduledEventRecurrenceRuleFrequency.Weekly | GuildScheduledEventRecurrenceRuleFrequency.Daily,
+    {
+      byWeekday: readonly GuildScheduledEventRecurrenceRuleWeekday[];
+    }
+  >;
+
+type BaseGuildScheduledEventRecurrenceRuleOptions<
+  Frequency extends GuildScheduledEventRecurrenceRuleFrequency,
+  Extra extends {},
+> = {
+  startAt: DateResolvable;
+  interval: number;
+  frequency: Frequency;
+} & Extra;
+
+export interface GuildScheduledEventEditOptions<
+  S extends GuildScheduledEventStatus,
+  T extends GuildScheduledEventSetStatusArg<S>,
+> extends Omit<Partial<GuildScheduledEventCreateOptions>, 'channel' | 'recurrenceRule'> {
+  channel?: GuildVoiceChannelResolvable | null;
+  status?: T | number;
+  recurrenceRule?: GuildScheduledEventRecurrenceRuleOptions | null;
+}
+
+export interface GuildScheduledEventEntityMetadata {
+  location: string | null;
+}
+
+export interface GuildScheduledEventEntityMetadataOptions {
+  location?: string;
+}
+
+export type GuildScheduledEventEntityType = keyof typeof GuildScheduledEventEntityTypes;
+
+export type GuildScheduledEventManagerFetchResult<
+  T extends GuildScheduledEventResolvable | FetchGuildScheduledEventOptions | FetchGuildScheduledEventsOptions,
+> = T extends GuildScheduledEventResolvable | FetchGuildScheduledEventOptions
+  ? GuildScheduledEvent
+  : Collection<Snowflake, GuildScheduledEvent>;
+
+export type GuildScheduledEventManagerFetchSubscribersResult<T extends FetchGuildScheduledEventSubscribersOptions> =
+  T extends { withMember: true }
+  ? Collection<Snowflake, GuildScheduledEventUser<true>>
+  : Collection<Snowflake, GuildScheduledEventUser<false>>;
+
+export type GuildScheduledEventPrivacyLevel = keyof typeof GuildScheduledEventPrivacyLevels;
+
+export type GuildScheduledEventResolvable = Snowflake | GuildScheduledEvent;
+
+export type GuildScheduledEventSetStatusArg<T extends GuildScheduledEventStatus> = T extends 'SCHEDULED'
+  ? 'ACTIVE' | 'CANCELED'
+  : T extends 'ACTIVE'
+  ? 'COMPLETED'
+  : never;
+
+export type GuildScheduledEventStatus = keyof typeof GuildScheduledEventStatuses;
+
+export interface GuildScheduledEventUser<T> {
+  guildScheduledEventId: Snowflake;
+  user: User;
+  member: T extends true ? GuildMember : null;
+}
+
+export type GuildTemplateResolvable = string;
+
+export type GuildVoiceChannelResolvable = VoiceBasedChannel | Snowflake;
+
+export type HexColorString = `#${string}`;
+
+export interface IncidentActions {
+  invitesDisabledUntil: Date | null;
+  dmsDisabledUntil: Date | null;
+  dmSpamDetectedAt: Date | null;
+  raidDetectedAt: Date | null;
+}
+
+export interface IncidentActionsEditOptions {
+  invitesDisabledUntil?: DateResolvable | null | undefined;
+  dmsDisabledUntil?: DateResolvable | null | undefined;
+}
+export interface HTTPAttachmentData {
+  attachment: string | Buffer | Stream;
+  name: string;
+  file: Buffer | Stream;
+}
+
+export interface HTTPErrorData {
+  json: unknown;
+  files: HTTPAttachmentData[];
+  headers?: Record<string, string>;
+}
+
+export interface HTTPOptions {
+  agent?: Omit<ProxyAgent.Options, 'keepAlive'>;
+  api?: string;
+  version?: number;
+  host?: string;
+  cdn?: string;
+  invite?: string;
+  template?: string;
+  headers?: Record<string, string>;
+  scheduledEvent?: string;
+}
+
+export interface ImageURLOptions extends Omit<StaticImageURLOptions, 'format'> {
+  dynamic?: boolean;
+  format?: DynamicImageFormat;
+}
+
+export type IntegrationType = 'twitch' | 'youtube' | 'discord' | 'guild_subscription';
+
+export interface InteractionCollectorOptions<T extends Interaction, Cached extends CacheType = CacheType>
+  extends CollectorOptions<[T]> {
+  channel?: TextBasedChannelResolvable;
+  componentType?: MessageComponentType | MessageComponentTypes;
+  guild?: GuildResolvable;
+  interactionType?: InteractionType | InteractionTypes;
+  max?: number;
+  maxComponents?: number;
+  maxUsers?: number;
+  message?: CacheTypeReducer<Cached, Message, APIMessage>;
+}
+
+export interface InteractionDeferReplyOptions {
+  ephemeral?: boolean;
+  fetchReply?: boolean;
+}
+
+export type InteractionDeferUpdateOptions = Omit<InteractionDeferReplyOptions, 'ephemeral'>;
+
+export interface InteractionReplyOptions extends Omit<WebhookMessageOptions, 'username' | 'avatarURL' | 'flags'> {
+  ephemeral?: boolean;
+  fetchReply?: boolean;
+  flags?: BitFieldResolvable<'SUPPRESS_EMBEDS' | 'EPHEMERAL', number>;
+}
+
+export type InteractionResponseType = keyof typeof InteractionResponseTypes;
+
+export type InteractionType = keyof typeof InteractionTypes;
+
+export interface InteractionUpdateOptions extends MessageEditOptions {
+  fetchReply?: boolean;
+}
+
+export type IntentsString =
+  | 'GUILDS'
+  | 'GUILD_MEMBERS'
+  | 'GUILD_BANS'
+  | 'GUILD_EMOJIS_AND_STICKERS'
+  | 'GUILD_INTEGRATIONS'
+  | 'GUILD_WEBHOOKS'
+  | 'GUILD_INVITES'
+  | 'GUILD_VOICE_STATES'
+  | 'GUILD_PRESENCES'
+  | 'GUILD_MESSAGES'
+  | 'GUILD_MESSAGE_REACTIONS'
+  | 'GUILD_MESSAGE_TYPING'
+  | 'DIRECT_MESSAGES'
+  | 'DIRECT_MESSAGE_REACTIONS'
+  | 'DIRECT_MESSAGE_TYPING'
+  | 'MESSAGE_CONTENT'
+  | 'GUILD_SCHEDULED_EVENTS'
+  | 'AUTO_MODERATION_CONFIGURATION'
+  | 'AUTO_MODERATION_EXECUTION';
+
+export type GuildInvitableChannelResolvable =
+  | TextChannel
+  | VoiceChannel
+  | NewsChannel
+  | StoreChannel
+  | StageChannel
+  | Snowflake;
+
+export interface CreateInviteOptions {
+  temporary?: boolean;
+  maxAge?: number;
+  maxUses?: number;
+  unique?: boolean;
+  reason?: string;
+  targetApplication?: ApplicationResolvable;
+  targetUser?: UserResolvable;
+  targetType?: InviteTargetTypes;
+}
+
+export type IntegrationExpireBehaviors = 'REMOVE_ROLE' | 'KICK';
+
+export type InviteResolvable = string;
+
+export type InviteScope =
+  | 'applications.builds.read'
+  | 'applications.commands'
+  | 'applications.entitlements'
+  | 'applications.store.update'
+  | 'bot'
+  | 'connections'
+  | 'email'
+  | 'identify'
+  | 'guilds'
+  | 'guilds.join'
+  | 'gdm.join'
+  | 'webhook.incoming'
+  | 'role_connections.write';
+
+export interface LifetimeFilterOptions<K, V> {
+  excludeFromSweep?: (value: V, key: K, collection: LimitedCollection<K, V>) => boolean;
+  getComparisonTimestamp?: (value: V, key: K, collection: LimitedCollection<K, V>) => number;
+  lifetime?: number;
+}
+
+export interface MakeErrorOptions {
+  name: string;
+  message: string;
+  stack: string;
+}
+
+export type MemberMention = UserMention | `<@!${Snowflake}>`;
+
+export type MembershipState = keyof typeof MembershipStates;
+
+export type MessageActionRowComponent = MessageButton | MessageSelectMenu;
+
+export type MessageActionRowComponentOptions =
+  | (Required<BaseMessageComponentOptions> & MessageButtonOptions)
+  | (Required<BaseMessageComponentOptions> & MessageSelectMenuOptions);
+
+export type MessageActionRowComponentResolvable =
+  | MessageActionRowComponent
+  | MessageActionRowComponentOptions
+  | APIMessageActionRowComponent;
+
+export type ModalActionRowComponent = TextInputComponent;
+
+export type ModalActionRowComponentOptions = TextInputComponentOptions;
+
+export type ModalActionRowComponentResolvable =
+  | ModalActionRowComponent
+  | ModalActionRowComponentOptions
+  | APIModalActionRowComponent;
+
+export interface MessageActionRowOptions<
+  T extends
+  | MessageActionRowComponentResolvable
+  | ModalActionRowComponentResolvable = MessageActionRowComponentResolvable,
+> extends BaseMessageComponentOptions {
+  components: T[];
+}
+
+export interface MessageActivity {
+  partyId: string;
+  type: MessageActivityType;
+}
+
+export interface BaseButtonOptions extends BaseMessageComponentOptions {
+  type: 'BUTTON' | MessageComponentTypes.BUTTON;
+  disabled?: boolean;
+  emoji?: EmojiIdentifierResolvable;
+  label?: string;
+}
+
+export interface LinkButtonOptions extends BaseButtonOptions {
+  style: 'LINK' | MessageButtonStyles.LINK;
+  url: string;
+}
+
+export interface InteractionButtonOptions extends BaseButtonOptions {
+  style: ExcludeEnum<typeof MessageButtonStyles, 'LINK'>;
+  customId: string;
+}
+
+export type MessageButtonOptions = InteractionButtonOptions | LinkButtonOptions;
+
+export type MessageButtonStyle = keyof typeof MessageButtonStyles;
+
+export type MessageButtonStyleResolvable = MessageButtonStyle | MessageButtonStyles;
+
+export interface MessageCollectorOptions extends CollectorOptions<[Message]> {
+  max?: number;
+  maxProcessed?: number;
+}
+
+export type MessageComponent = BaseMessageComponent | MessageActionRow | MessageButton | MessageSelectMenu;
+
+export type MessageComponentCollectorOptions<T extends MessageComponentInteraction | ModalSubmitInteraction> = Omit<
+  InteractionCollectorOptions<T>,
+  'channel' | 'message' | 'guild' | 'interactionType'
+>;
+
+export type MessageChannelComponentCollectorOptions<T extends MessageComponentInteraction | ModalSubmitInteraction> =
+  Omit<InteractionCollectorOptions<T>, 'channel' | 'guild' | 'interactionType'>;
+
+export type MessageComponentOptions =
+  | BaseMessageComponentOptions
+  | MessageActionRowOptions
+  | MessageButtonOptions
+  | MessageSelectMenuOptions;
+
+export type MessageComponentType = keyof typeof MessageComponentTypes;
+
+export type MessageComponentInteractableType = keyof typeof MessageComponentInteractables;
+
+export type MessageComponentTypeResolvable = MessageComponentType | MessageComponentTypes;
+
+export type MessageComponentInteractableResolvable = MessageComponentInteractableType | MessageComponentInteractables;
+
+export type GuildForumThreadMessageCreateOptions = Omit<MessageOptions, 'poll'> &
+  Pick<MessageOptions, 'flags' | 'stickers'>;
+
+export type TopLevelComponent =
+  | MessageActionRow
+  | ContainerComponent
+  | FileComponent
+  | MediaGalleryComponent
+  | SectionComponent
+  | SeparatorComponent
+  | TextDisplayComponent;
+
+export interface MessageEditOptions {
+  attachments?: MessageAttachment[];
+  content?: string | null;
+  embeds?: (MessageEmbed | MessageEmbedOptions | APIEmbed)[] | null;
+  files?: (FileOptions | BufferResolvable | Stream | MessageAttachment)[];
+  flags?: BitFieldResolvable<MessageFlagsString, number>;
+  allowedMentions?: MessageMentionOptions;
+  components?: (MessageActionRow | (Required<BaseMessageComponentOptions> & MessageActionRowOptions))[];
+}
+
+export interface MessageEmbedAuthor {
+  name: string;
+  url?: string;
+  iconURL?: string;
+  proxyIconURL?: string;
+}
+
+export interface MessageEmbedFooter {
+  text: string;
+  iconURL?: string;
+  proxyIconURL?: string;
+}
+
+export interface MessageEmbedImage {
+  url: string;
+  proxyURL?: string;
+  height?: number;
+  width?: number;
+}
+
+export interface MessageEmbedOptions {
+  title?: string;
+  description?: string;
+  url?: string;
+  timestamp?: Date | number;
+  color?: ColorResolvable;
+  fields?: EmbedFieldData[];
+  author?: Partial<MessageEmbedAuthor> & { icon_url?: string; proxy_icon_url?: string };
+  thumbnail?: Partial<MessageEmbedThumbnail> & { proxy_url?: string };
+  image?: Partial<MessageEmbedImage> & { proxy_url?: string };
+  video?: Partial<MessageEmbedVideo> & { proxy_url?: string };
+  footer?: Partial<MessageEmbedFooter> & { icon_url?: string; proxy_icon_url?: string };
+}
+
+export interface MessageEmbedProvider {
+  name: string;
+  url: string;
+}
+
+export interface MessageEmbedThumbnail {
+  url: string;
+  proxyURL?: string;
+  height?: number;
+  width?: number;
+}
+
+export interface MessageEmbedVideo {
+  url?: string;
+  proxyURL?: string;
+  height?: number;
+  width?: number;
+}
+
+export interface MessageEvent {
+  data: WebSocket.Data;
+  type: string;
+  target: WebSocket;
+}
+
+export type MessageFlagsString =
+  | 'CROSSPOSTED'
+  | 'IS_CROSSPOST'
+  | 'SUPPRESS_EMBEDS'
+  | 'SOURCE_MESSAGE_DELETED'
+  | 'URGENT'
+  | 'HAS_THREAD'
+  | 'EPHEMERAL'
+  | 'LOADING'
+  | 'FAILED_TO_MENTION_SOME_ROLES_IN_THREAD'
+  | 'GUILD_FEED_HIDDEN'
+  | 'SHOULD_SHOW_LINK_NOT_DISCORD_WARNING'
+  | 'SUPPRESS_NOTIFICATIONS'
+  | 'IS_VOICE_MESSAGE'
+  | 'HAS_SNAPSHOT'
+  | 'IS_COMPONENTS_V2';
+
+export interface MessageInteraction {
+  id: Snowflake;
+  type: InteractionType;
+  commandName: string;
+  user: User;
+}
+
+export interface MessageMentionsHasOptions {
+  ignoreDirect?: boolean;
+  ignoreRoles?: boolean;
+  ignoreRepliedUser?: boolean;
+  ignoreEveryone?: boolean;
+}
+
+export interface MessageMentionOptions {
+  parse?: MessageMentionTypes[];
+  roles?: Snowflake[];
+  users?: Snowflake[];
+  repliedUser?: boolean;
+}
+
+export type MessageMentionTypes = 'roles' | 'users' | 'everyone';
+
+export interface MessageSnapshot
+  extends Partialize<
+    Message,
+    null,
+    Exclude<
+      keyof Message,
+      | 'attachments'
+      | 'client'
+      | 'components'
+      | 'content'
+      | 'createdTimestamp'
+      | 'editedTimestamp'
+      | 'embeds'
+      | 'flags'
+      | 'mentions'
+      | 'stickers'
+      | 'type'
+    >
+  > { }
+
+export interface MessageOptions {
+  activity?: MessageActivity;
+  tts?: boolean;
+  nonce?: string | number;
+  content?: string | null;
+  embeds?: (MessageEmbed | MessageEmbedOptions | APIEmbed)[];
+  components?: (MessageActionRow | (Required<BaseMessageComponentOptions> & MessageActionRowOptions))[];
+  allowedMentions?: MessageMentionOptions;
+  files?: (FileOptions | BufferResolvable | Stream | MessageAttachment)[];
+  reply?: ReplyOptions;
+  forward?: ForwardOptions;
+  stickers?: StickerResolvable[];
+  attachments?: MessageAttachment[];
+  flags?: BitFieldResolvable<'SUPPRESS_EMBEDS' | 'SUPPRESS_NOTIFICATIONS' | 'IS_VOICE_MESSAGE', number>;
+  poll?: Poll;
+}
+
+export type MessageReactionResolvable = MessageReaction | Snowflake | string;
+
+export interface MessageReference {
+  channelId: Snowflake;
+  guildId: Snowflake | undefined;
+  messageId: Snowflake | undefined;
+  type: MessageReferenceTypes;
+}
+
+export type MessageResolvable = Message | Snowflake;
+
+export interface BaseMessageSelectMenuOptions {
+  type?: SelectMenuComponentType | SelectMenuComponentTypes;
+  customId?: string;
+  disabled?: boolean;
+  maxValues?: number;
+  minValues?: number;
+  placeholder?: string;
+}
+
+export interface StringMessageSelectMenuOptions extends BaseMessageSelectMenuOptions {
+  type?: 'STRING_SELECT' | SelectMenuComponentTypes.STRING_SELECT;
+  options?: MessageSelectOptionData[];
+}
+
+export interface ChannelMessageSelectMenuOptions extends BaseMessageSelectMenuOptions {
+  type?: 'CHANNEL_SELECT' | SelectMenuComponentTypes.CHANNEL_SELECT;
+  channelTypes?: ChannelTypes[];
+}
+
+export interface OtherMessageSelectMenuOptions extends BaseMessageSelectMenuOptions {
+  type?: ExcludeEnum<typeof SelectMenuComponentTypes, 'CHANNEL_SELECT' | 'STRING_SELECT'>;
+}
+
+export type MessageSelectMenuOptions =
+  | StringMessageSelectMenuOptions
+  | ChannelMessageSelectMenuOptions
+  | OtherMessageSelectMenuOptions;
+
+export interface MessageSelectOption {
+  default: boolean;
+  description: string | null;
+  emoji: APIPartialEmoji | null;
+  label: string;
+  value: string;
+}
+
+export interface MessageSelectOptionData {
+  default?: boolean;
+  description?: string;
+  emoji?: EmojiIdentifierResolvable;
+  label: string;
+  value: string;
+}
+
+export type MessageTarget =
+  | Interaction
+  | InteractionWebhook
+  | TextBasedChannel
+  | User
+  | GuildMember
+  | Webhook
+  | WebhookClient
+  | Message
+  | MessageManager;
+
+export type MessageType = keyof typeof MessageTypes;
+
+export type MFALevel = keyof typeof MFALevels;
+
+export interface ModalOptions {
+  components:
+  | MessageActionRow<ModalActionRowComponent>[]
+  | MessageActionRowOptions<ModalActionRowComponentResolvable>[];
+  customId: string;
+  title: string;
+}
+
+export type ModalSubmitInteractionCollectorOptions<T extends ModalSubmitInteraction> = Omit<
+  InteractionCollectorOptions<T>,
+  'channel' | 'message' | 'guild' | 'interactionType'
+>;
+
+export interface MultipleShardRespawnOptions {
+  shardDelay?: number;
+  respawnDelay?: number;
+  timeout?: number;
+}
+
+export interface MultipleShardSpawnOptions {
+  amount?: number | 'auto';
+  delay?: number;
+  timeout?: number;
+}
+
+export type NSFWLevel = keyof typeof NSFWLevels;
+
+export interface OverwriteData {
+  allow?: PermissionResolvable;
+  deny?: PermissionResolvable;
+  id: GuildMemberResolvable | RoleResolvable;
+  type?: OverwriteType;
+}
+
+export type OverwriteResolvable = PermissionOverwrites | OverwriteData;
+
+export type OverwriteType = 'member' | 'role';
+
+export interface PartialModalActionRow {
+  type: MessageComponentType;
+  components: PartialTextInputData[];
+}
+
+export interface PartialTextInputData {
+  value: string;
+  // TODO: use dapi types
+  type: MessageComponentType;
+  customId: string;
+}
+
+export type PermissionFlags = Record<PermissionString, bigint>;
+
+export type PermissionOverwriteOptions = Partial<Record<PermissionString, boolean | null>>;
+
+export type PermissionResolvable = BitFieldResolvable<PermissionString, bigint>;
+
+export type PermissionOverwriteResolvable = UserResolvable | RoleResolvable | PermissionOverwrites;
+
+export type PermissionString =
+  | 'CREATE_INSTANT_INVITE'
+  | 'KICK_MEMBERS'
+  | 'BAN_MEMBERS'
+  | 'ADMINISTRATOR'
+  | 'MANAGE_CHANNELS'
+  | 'MANAGE_GUILD'
+  | 'ADD_REACTIONS'
+  | 'VIEW_AUDIT_LOG'
+  | 'PRIORITY_SPEAKER'
+  | 'STREAM'
+  | 'VIEW_CHANNEL'
+  | 'SEND_MESSAGES'
+  | 'SEND_TTS_MESSAGES'
+  | 'MANAGE_MESSAGES'
+  | 'EMBED_LINKS'
+  | 'ATTACH_FILES'
+  | 'READ_MESSAGE_HISTORY'
+  | 'MENTION_EVERYONE'
+  | 'USE_EXTERNAL_EMOJIS'
+  | 'VIEW_GUILD_INSIGHTS'
+  | 'CONNECT'
+  | 'SPEAK'
+  | 'MUTE_MEMBERS'
+  | 'DEAFEN_MEMBERS'
+  | 'MOVE_MEMBERS'
+  | 'USE_VAD'
+  | 'CHANGE_NICKNAME'
+  | 'MANAGE_NICKNAMES'
+  | 'MANAGE_ROLES'
+  | 'MANAGE_WEBHOOKS'
+  | 'MANAGE_EMOJIS_AND_STICKERS'
+  | 'USE_APPLICATION_COMMANDS'
+  | 'REQUEST_TO_SPEAK'
+  | 'MANAGE_THREADS'
+  | 'USE_PUBLIC_THREADS'
+  | 'CREATE_PUBLIC_THREADS'
+  | 'USE_PRIVATE_THREADS'
+  | 'CREATE_PRIVATE_THREADS'
+  | 'USE_EXTERNAL_STICKERS'
+  | 'SEND_MESSAGES_IN_THREADS'
+  | 'START_EMBEDDED_ACTIVITIES'
+  | 'MODERATE_MEMBERS'
+  | 'MANAGE_EVENTS'
+  | 'VIEW_CREATOR_MONETIZATION_ANALYTICS'
+  | 'USE_SOUNDBOARD'
+  | 'CREATE_GUILD_EXPRESSIONS'
+  | 'CREATE_EVENTS'
+  | 'USE_EXTERNAL_SOUNDS'
+  | 'SEND_VOICE_MESSAGES'
+  | 'USE_CLYDE_AI'
+  | 'SET_VOICE_CHANNEL_STATUS'
+  | 'SEND_POLLS'
+  | 'USE_EXTERNAL_APPS';
+
+export type RecursiveArray<T> = ReadonlyArray<T | RecursiveArray<T>>;
+
+export type RecursiveReadonlyArray<T> = ReadonlyArray<T | RecursiveReadonlyArray<T>>;
+
+export interface PartialRecipient {
+  username: string;
+}
+
+export type PremiumTier = keyof typeof PremiumTiers;
+
+export interface PresenceData {
+  status?: PresenceStatusData;
+  afk?: boolean;
+  activities?: (ActivitiesOptions | RichPresence | SpotifyRPC | CustomStatus)[];
+  shardId?: number | number[];
+}
+
+export type PresenceResolvable = Presence | UserResolvable | Snowflake;
+
+export interface PartialChannelData {
+  id?: Snowflake | number;
+  parentId?: Snowflake | number;
+  type?: ExcludeEnum<
+    typeof ChannelTypes,
+    | 'DM'
+    | 'GROUP_DM'
+    | 'GUILD_NEWS'
+    | 'GUILD_STORE'
+    | 'UNKNOWN'
+    | 'GUILD_NEWS_THREAD'
+    | 'GUILD_PUBLIC_THREAD'
+    | 'GUILD_PRIVATE_THREAD'
+    | 'GUILD_STAGE_VOICE'
+  >;
+  name: string;
+  topic?: string;
+  nsfw?: boolean;
+  bitrate?: number;
+  userLimit?: number;
+  rtcRegion?: string | null;
+  videoQualityMode?: VideoQualityMode;
+  permissionOverwrites?: PartialOverwriteData[];
+  rateLimitPerUser?: number;
+  availableTags?: GuildForumTagData[];
+  defaultReactionEmoji?: DefaultReactionEmoji;
+  defaultThreadRateLimitPerUser?: number;
+}
+
+export type Partialize<
+  T extends AllowedPartial,
+  N extends keyof T | null = null,
+  M extends keyof T | null = null,
+  E extends keyof T | '' = '',
+> = {
+  readonly client: Client;
+  id: Snowflake;
+  partial: true;
+} & {
+    [K in keyof Omit<T, 'client' | 'id' | 'partial' | E>]: K extends N ? null : K extends M ? T[K] | null : T[K];
+  };
+
+export interface PartialDMChannel extends Partialize<DMChannel, null, null, 'lastMessageId'> {
+  lastMessageId: undefined;
+}
+
+export interface PartialGuildMember extends Partialize<GuildMember, 'joinedAt' | 'joinedTimestamp'> { }
+
+export interface PartialMessage
+  extends Partialize<Message, 'type' | 'system' | 'pinned' | 'tts', 'content' | 'cleanContent' | 'author'> { }
+
+export interface PartialMessageReaction extends Partialize<MessageReaction, 'count'> { }
+
+export interface PartialGuildScheduledEvent
+  extends Partialize<GuildScheduledEvent, 'userCount', 'status' | 'privacyLevel' | 'name' | 'entityType'> { }
+
+export interface PartialOverwriteData {
+  id: Snowflake | number;
+  type?: OverwriteType;
+  allow?: PermissionResolvable;
+  deny?: PermissionResolvable;
+}
+
+export interface PartialRoleData extends RoleData {
+  id?: Snowflake | number;
+}
+
+export type PartialTypes = 'USER' | 'CHANNEL' | 'GUILD_MEMBER' | 'MESSAGE' | 'REACTION' | 'GUILD_SCHEDULED_EVENT';
+
+export interface PartialUser extends Partialize<User, 'username' | 'tag' | 'discriminator'> { }
+
+export type PresenceStatusData = ClientPresenceStatus | 'invisible';
+
+export type PresenceStatus = PresenceStatusData | 'offline';
+
+export type PrivacyLevel = keyof typeof PrivacyLevels;
+
+export interface RateLimitData {
+  timeout: number;
+  limit: number;
+  method: string;
+  path: string;
+  route: string;
+  global: boolean;
+}
+
+export interface InvalidRequestWarningData {
+  count: number;
+  remainingTime: number;
+}
+
+export interface ReactionCollectorOptions extends CollectorOptions<[MessageReaction, User]> {
+  max?: number;
+  maxEmojis?: number;
+  maxUsers?: number;
+}
+
+export interface ReplyOptions {
+  messageReference: MessageResolvable;
+  failIfNotExists?: boolean;
+}
+
+export interface BaseForwardOptions {
+  message: MessageResolvable;
+  channel?: TextBasedChannelResolvable;
+  guild?: GuildResolvable;
+}
+
+export type ForwardOptionsWithMandatoryChannel = BaseForwardOptions & Required<Pick<BaseForwardOptions, 'channel'>>;
+
+export interface ForwardOptionsWithOptionalChannel extends BaseForwardOptions {
+  message: Exclude<MessageResolvable, Snowflake>;
+}
+
+export type ForwardOptions = ForwardOptionsWithMandatoryChannel | ForwardOptionsWithOptionalChannel;
+
+export interface ReplyMessageOptions extends Omit<MessageOptions, 'reply' | 'forward'> {
+  failIfNotExists?: boolean;
+}
+export interface ResolvedOverwriteOptions {
+  allow: Permissions;
+  deny: Permissions;
+}
+
+export interface RoleData {
+  name?: string;
+  /** @deprecated Use {@link RoleData.colors} instead. */
+  color?: ColorResolvable;
+  colors?: RoleColorsResolvable;
+  hoist?: boolean;
+  position?: number;
+  permissions?: PermissionResolvable;
+  mentionable?: boolean;
+  icon?: BufferResolvable | Base64Resolvable | EmojiResolvable | null;
+  unicodeEmoji?: string | null;
+}
+
+export type RoleMention = '@everyone' | `<@&${Snowflake}>`;
+
+export interface RolePosition {
+  role: RoleResolvable;
+  position: number;
+}
+
+export type RoleResolvable = Role | Snowflake;
+
+export interface RoleTagData {
+  botId?: Snowflake;
+  integrationId?: Snowflake;
+  premiumSubscriberRole?: true;
+  subscriptionListingId?: Snowflake;
+  availableForPurchase?: true;
+  guildConnections?: true;
+}
+
+export interface SetChannelPositionOptions {
+  relative?: boolean;
+  reason?: string;
+}
+
+export interface SetParentOptions {
+  lockPermissions?: boolean;
+  reason?: string;
+}
+
+export interface SetRolePositionOptions {
+  relative?: boolean;
+  reason?: string;
+}
+
+export type ShardingManagerMode = 'process' | 'worker';
+
+export interface ShardingManagerOptions {
+  totalShards?: number | 'auto';
+  shardList?: number[] | 'auto';
+  mode?: ShardingManagerMode;
+  respawn?: boolean;
+  shardArgs?: string[];
+  token?: string;
+  execArgv?: string[];
+}
+
+export { Snowflake };
+
+export interface SplitOptions {
+  maxLength?: number;
+  char?: string | string[] | RegExp | RegExp[];
+  prepend?: string;
+  append?: string;
+}
+
+export interface StaticImageURLOptions {
+  format?: AllowedImageFormat;
+  size?: AllowedImageSize;
+}
+
+export type StageInstanceResolvable = StageInstance | Snowflake;
+
+export interface StartThreadOptions {
+  name: string;
+  autoArchiveDuration?: ThreadAutoArchiveDuration | 'MAX';
+  reason?: string;
+  rateLimitPerUser?: number;
+}
+
+export type Status = number;
+
+export type VoiceStatus = number;
+
+export type StickerFormatType = keyof typeof StickerFormatTypes;
+
+export type StickerResolvable = Sticker | Snowflake;
+
+export type StickerType = keyof typeof StickerTypes;
+
+export type SystemChannelFlagsString =
+  | 'SUPPRESS_JOIN_NOTIFICATIONS'
+  | 'SUPPRESS_PREMIUM_SUBSCRIPTIONS'
+  | 'SUPPRESS_GUILD_REMINDER_NOTIFICATIONS'
+  | 'SUPPRESS_JOIN_NOTIFICATION_REPLIES'
+  | 'SUPPRESS_ROLE_SUBSCRIPTION_PURCHASE_NOTIFICATIONS'
+  | 'SUPPRESS_ROLE_SUBSCRIPTION_PURCHASE_NOTIFICATION_REPLIES';
+
+export type SystemChannelFlagsResolvable = BitFieldResolvable<SystemChannelFlagsString, number>;
+
+export type ChannelFlagsResolvable = BitFieldResolvable<ChannelFlagsString, number>;
+
+export type SelectMenuComponentType = keyof typeof SelectMenuComponentTypes;
+
+export type SystemMessageType = Exclude<
+  MessageType,
+  'DEFAULT' | 'REPLY' | 'APPLICATION_COMMAND' | 'CONTEXT_MENU_COMMAND'
+>;
+
+export type StageChannelResolvable = StageChannel | Snowflake;
+
+export interface StageInstanceEditOptions {
+  topic?: string;
+  privacyLevel?: PrivacyLevel | number;
+}
+
+export type SweeperKey = keyof SweeperDefinitions;
+
+export type CollectionSweepFilter<K, V> = (value: V, key: K, collection: Collection<K, V>) => boolean;
+
+export type SweepFilter<K, V> = (
+  collection: LimitedCollection<K, V>,
+) => ((value: V, key: K, collection: LimitedCollection<K, V>) => boolean) | null;
+
+export interface SweepOptions<K, V> {
+  interval: number;
+  filter: GlobalSweepFilter<K, V>;
+}
+
+export interface LifetimeSweepOptions {
+  interval: number;
+  lifetime: number;
+  filter?: never;
+}
+
+export interface SweeperDefinitions {
+  applicationCommands: [Snowflake, ApplicationCommand];
+  autoModerationRules: [Snowflake, AutoModerationRule];
+  bans: [Snowflake, GuildBan];
+  emojis: [Snowflake, GuildEmoji];
+  invites: [string, Invite, true];
+  guildMembers: [Snowflake, GuildMember];
+  messages: [Snowflake, Message, true];
+  presences: [Snowflake, Presence];
+  reactions: [string | Snowflake, MessageReaction];
+  stageInstances: [Snowflake, StageInstance];
+  stickers: [Snowflake, Sticker];
+  threadMembers: [Snowflake, ThreadMember];
+  threads: [Snowflake, ThreadChannel, true];
+  users: [Snowflake, User];
+  voiceStates: [Snowflake, VoiceState];
+}
+
+export type SweeperOptions = {
+  [K in keyof SweeperDefinitions]?: SweeperDefinitions[K][2] extends true
+  ? SweepOptions<SweeperDefinitions[K][0], SweeperDefinitions[K][1]> | LifetimeSweepOptions
+  : SweepOptions<SweeperDefinitions[K][0], SweeperDefinitions[K][1]>;
+};
+
+export interface LimitedCollectionOptions<K, V> {
+  maxSize?: number;
+  keepOverLimit?: (value: V, key: K, collection: LimitedCollection<K, V>) => boolean;
+  /** @deprecated Use Global Sweepers instead */
+  sweepFilter?: SweepFilter<K, V>;
+  /** @deprecated Use Global Sweepers instead */
+  sweepInterval?: number;
+}
+
+export type AnyChannel =
+  | CategoryChannel
+  | DMChannel
+  | PartialDMChannel
+  | GroupDMChannel
+  | NewsChannel
+  | StageChannel
+  | StoreChannel
+  | TextChannel
+  | ThreadChannel
+  | VoiceChannel
+  | ForumChannel
+  | MediaChannel;
+
+export type TextBasedChannel = Exclude<Extract<AnyChannel, { messages: MessageManager }>, ForumChannel | MediaChannel>;
+
+export type TextBasedChannelTypes = TextBasedChannel['type'];
+
+export interface TextInputComponentOptions extends BaseMessageComponentOptions {
+  customId?: string;
+  label?: string;
+  minLength?: number;
+  maxLength?: number;
+  placeholder?: string;
+  required?: boolean;
+  style?: TextInputStyleResolvable;
+  value?: string;
+}
+
+export type TextInputStyle = keyof typeof TextInputStyles;
+
+export type TextInputStyleResolvable = TextInputStyle | TextInputStyles;
+export interface IntegrationAccount {
+  id: string | Snowflake;
+  name: string;
+}
+
+export type VoiceBasedChannel = Extract<AnyChannel, { bitrate: number }>;
+
+export type GuildBasedChannel = Extract<AnyChannel, { guild: Guild }>;
+
+export type NonThreadGuildBasedChannel = Exclude<GuildBasedChannel, ThreadChannel>;
+
+export type GuildTextBasedChannel = Extract<GuildBasedChannel, TextBasedChannel>;
+
+export type TextChannelResolvable = Snowflake | TextChannel;
+
+export type TextBasedChannelResolvable = Snowflake | TextBasedChannel;
+
+export type ThreadAutoArchiveDuration = 60 | 1440 | 4320 | 10080;
+
+export type ThreadChannelResolvable = ThreadChannel | Snowflake;
+
+export type ThreadChannelTypes = 'GUILD_NEWS_THREAD' | 'GUILD_PUBLIC_THREAD' | 'GUILD_PRIVATE_THREAD';
+
+export interface GuildTextThreadCreateOptions<AllowedThreadType> extends StartThreadOptions {
+  startMessage?: MessageResolvable;
+  type?: AllowedThreadType;
+  invitable?: AllowedThreadType extends 'GUILD_PRIVATE_THREAD' | 12 ? boolean : never;
+  rateLimitPerUser?: number;
+}
+
+export interface GuildForumThreadCreateOptions extends StartThreadOptions {
+  message: GuildForumThreadMessageCreateOptions | MessagePayload;
+  appliedTags?: Snowflake[];
+}
+
+export interface ThreadEditData {
+  name?: string;
+  archived?: boolean;
+  autoArchiveDuration?: ThreadAutoArchiveDuration | 'MAX';
+  rateLimitPerUser?: number;
+  locked?: boolean;
+  invitable?: boolean;
+  appliedTags?: Snowflake[];
+  flags?: ChannelFlagsResolvable;
+}
+
+export type ThreadMemberFlagsString = '';
+
+export type ThreadMemberResolvable = ThreadMember | UserResolvable;
+
+export type UserFlagsString =
+  | 'DISCORD_EMPLOYEE'
+  | 'PARTNERED_SERVER_OWNER'
+  | 'HYPESQUAD_EVENTS'
+  | 'BUGHUNTER_LEVEL_1'
+  | 'HOUSE_BRAVERY'
+  | 'HOUSE_BRILLIANCE'
+  | 'HOUSE_BALANCE'
+  | 'EARLY_SUPPORTER'
+  | 'TEAM_USER'
+  | 'BUGHUNTER_LEVEL_2'
+  | 'VERIFIED_BOT'
+  | 'EARLY_VERIFIED_BOT_DEVELOPER'
+  | 'DISCORD_CERTIFIED_MODERATOR'
+  | 'BOT_HTTP_INTERACTIONS'
+  | 'ACTIVE_DEVELOPER';
+
+export type UserMention = `<@${Snowflake}>`;
+
+export type UserResolvable = User | Snowflake | Message | GuildMember | ThreadMember;
+
+export interface Vanity {
+  code: string | null;
+  uses: number;
+}
+
+export type VerificationLevel = keyof typeof VerificationLevels;
+
+export type VideoQualityMode = keyof typeof VideoQualityModes;
+
+export type VoiceBasedChannelTypes = VoiceBasedChannel['type'];
+
+export type VoiceChannelResolvable = Snowflake | VoiceChannel;
+
+export type WebhookClientData = WebhookClientDataIdWithToken | WebhookClientDataURL;
+
+export interface WebhookClientDataIdWithToken {
+  id: Snowflake;
+  token: string;
+}
+
+export interface WebhookClientDataURL {
+  url: string;
+}
+
+export type WebhookClientOptions = Pick<
+  ClientOptions,
+  'allowedMentions' | 'restTimeOffset' | 'restRequestTimeout' | 'retryLimit' | 'http'
+>;
+
+export interface WebhookEditData {
+  name?: string;
+  avatar?: BufferResolvable | null;
+  channel?: GuildTextChannelResolvable | VoiceChannel | StageChannel | ForumChannel | MediaChannel;
+}
+
+export type WebhookEditMessageOptions = Pick<
+  WebhookMessageOptions,
+  'content' | 'embeds' | 'files' | 'allowedMentions' | 'components' | 'attachments' | 'threadId'
+>;
+export interface InteractionEditReplyOptions extends WebhookEditMessageOptions {
+  message?: MessageResolvable | '@original';
+}
+
+export interface WebhookFetchMessageOptions {
+  cache?: boolean;
+  threadId?: Snowflake;
+}
+
+export interface WebhookMessageOptions extends Omit<MessageOptions, 'nonce' | 'reply' | 'stickers' | 'forward'> {
+  username?: string;
+  avatarURL?: string;
+  threadId?: Snowflake;
+  threadName?: string;
+  appliedTags?: Snowflake[];
+  withComponents?: boolean;
+}
+
+export type WebhookType = keyof typeof WebhookTypes;
+
+export interface WebSocketOptions {
+  agent?: Omit<AgentOptions, 'keepAlive'>;
+  compress?: boolean;
+  properties?: WebSocketProperties;
+}
+
+export interface WebSocketProperties {
+  os?: string;
+  browser?: string;
+  device?: string;
+  /** @deprecated Use {@link os} instead. */
+  $os?: string;
+  /** @deprecated Use {@link browser} instead. */
+  $browser?: string;
+  /** @deprecated Use {@link device} instead. */
+  $device?: string;
+}
+
+export interface WidgetActivity {
+  name: string;
+}
+
+export interface WidgetChannel {
+  id: Snowflake;
+  name: string;
+  position: number;
+}
+
+export interface WelcomeChannelData {
+  description: string;
+  channel: TextChannel | NewsChannel | StoreChannel | ForumChannel | MediaChannel | Snowflake;
+  emoji?: EmojiIdentifierResolvable;
+}
+
+export interface WelcomeScreenEditData {
+  enabled?: boolean;
+  description?: string;
+  welcomeChannels?: WelcomeChannelData[];
+}
+
+export type WSEventType =
+  | 'READY'
+  | 'RESUMED'
+  | 'APPLICATION_COMMAND_CREATE'
+  | 'APPLICATION_COMMAND_DELETE'
+  | 'APPLICATION_COMMAND_PERMISSIONS_UPDATE'
+  | 'APPLICATION_COMMAND_UPDATE'
+  | 'AUTO_MODERATION_ACTION_EXECUTION'
+  | 'AUTO_MODERATION_RULE_CREATE'
+  | 'AUTO_MODERATION_RULE_DELETE'
+  | 'AUTO_MODERATION_RULE_UPDATE'
+  | 'GUILD_CREATE'
+  | 'GUILD_DELETE'
+  | 'GUILD_UPDATE'
+  | 'INVITE_CREATE'
+  | 'INVITE_DELETE'
+  | 'GUILD_MEMBER_ADD'
+  | 'GUILD_MEMBER_REMOVE'
+  | 'GUILD_MEMBER_UPDATE'
+  | 'GUILD_MEMBERS_CHUNK'
+  | 'GUILD_ROLE_CREATE'
+  | 'GUILD_ROLE_DELETE'
+  | 'GUILD_ROLE_UPDATE'
+  | 'GUILD_BAN_ADD'
+  | 'GUILD_BAN_REMOVE'
+  | 'GUILD_EMOJIS_UPDATE'
+  | 'GUILD_INTEGRATIONS_UPDATE'
+  | 'CHANNEL_CREATE'
+  | 'CHANNEL_DELETE'
+  | 'CHANNEL_UPDATE'
+  | 'CHANNEL_PINS_UPDATE'
+  | 'MESSAGE_CREATE'
+  | 'MESSAGE_DELETE'
+  | 'MESSAGE_UPDATE'
+  | 'MESSAGE_DELETE_BULK'
+  | 'MESSAGE_REACTION_ADD'
+  | 'MESSAGE_REACTION_REMOVE'
+  | 'MESSAGE_REACTION_REMOVE_ALL'
+  | 'MESSAGE_REACTION_REMOVE_EMOJI'
+  | 'THREAD_CREATE'
+  | 'THREAD_UPDATE'
+  | 'THREAD_DELETE'
+  | 'THREAD_LIST_SYNC'
+  | 'THREAD_MEMBER_UPDATE'
+  | 'THREAD_MEMBERS_UPDATE'
+  | 'USER_UPDATE'
+  | 'PRESENCE_UPDATE'
+  | 'TYPING_START'
+  | 'VOICE_STATE_UPDATE'
+  | 'VOICE_SERVER_UPDATE'
+  | 'WEBHOOKS_UPDATE'
+  | 'INTERACTION_CREATE'
+  | 'STAGE_INSTANCE_CREATE'
+  | 'STAGE_INSTANCE_UPDATE'
+  | 'STAGE_INSTANCE_DELETE'
+  | 'GUILD_STICKERS_UPDATE';
+
+export type Serialized<T> = T extends symbol | bigint | (() => any)
+  ? never
+  : T extends number | string | boolean | undefined
+  ? T
+  : T extends { toJSON(): infer R }
+  ? R
+  : T extends ReadonlyArray<infer V>
+  ? Serialized<V>[]
+  : T extends ReadonlyMap<unknown, unknown> | ReadonlySet<unknown>
+  ? {}
+  : { [K in keyof T]: Serialized<T[K]> };
+
+//#endregion
+
+//#region Voice
+
+/**
+ * @internal Use `DiscordGatewayAdapterLibraryMethods` from `@discordjs/voice` instead.
+ */
+export interface InternalDiscordGatewayAdapterLibraryMethods {
+  onVoiceServerUpdate(data: GatewayVoiceServerUpdateDispatchData): void;
+  onVoiceStateUpdate(data: GatewayVoiceStateUpdateDispatchData): void;
+  destroy(): void;
+}
+
+/**
+ * @internal Use `DiscordGatewayAdapterImplementerMethods` from `@discordjs/voice` instead.
+ */
+export interface InternalDiscordGatewayAdapterImplementerMethods {
+  sendPayload(payload: unknown): boolean;
+  destroy(): void;
+}
+
+/**
+ * @internal Use `DiscordGatewayAdapterCreator` from `@discordjs/voice` instead.
+ */
+export type InternalDiscordGatewayAdapterCreator = (
+  methods: InternalDiscordGatewayAdapterLibraryMethods,
+) => InternalDiscordGatewayAdapterImplementerMethods;
+
+//#endregion

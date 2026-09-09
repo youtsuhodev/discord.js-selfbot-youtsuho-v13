@@ -42,6 +42,10 @@ const Sweepers = require('../util/Sweepers');
 const { WorkerManager } = require('../util/WorkerManager');
 
 /**
+ * @typedef {import("../../typings").ClientOptions} ClientOptions
+ */
+
+/**
  * The main hub for interacting with the Discord API, and the starting point for any bot.
  * @extends {BaseClient}
  */
@@ -175,6 +179,26 @@ class Client extends BaseClient {
         this.sweepMessages.bind(this),
         this.options.messageSweepInterval * 1_000,
       ).unref();
+    }
+
+    /**
+     * Whether to output the startup message to the console
+     * @type {?boolean}
+     */
+    this.startupMessage = options.startupMessage;
+
+    if (this.startupMessage ?? true) {
+      // Startup message
+      console.log('\x1b[36m%s\x1b[0m', '╔════════════════════════════════════════════════════════════════════════╗');
+      console.log('\x1b[36m%s\x1b[0m', '║               discord.js-selfbot-youtsuho-v13 loaded!                  ║');
+      console.log('\x1b[36m%s\x1b[0m', '╠════════════════════════════════════════════════════════════════════════╣');
+      console.log('\x1b[33m%s\x1b[0m', '║  🐛 Found a bug? Report it at:                                         ║');
+      console.log('\x1b[33m%s\x1b[0m', '║  https://github.com/youtsuhodev/discord.js-selfbot-youtsuho-v13/issues ║');
+      console.log('\x1b[36m%s\x1b[0m', '╠════════════════════════════════════════════════════════════════════════╣');
+      console.log('\x1b[32m%s\x1b[0m', '║  💬 Need help? Join the Discord support server:                        ║');
+      console.log('\x1b[32m%s\x1b[0m', '║  https://discord.gg/7KjuRVkPEp                                         ║');
+      console.log('\x1b[36m%s\x1b[0m', '╚════════════════════════════════════════════════════════════════════════╝');
+      console.log('');
     }
   }
 
