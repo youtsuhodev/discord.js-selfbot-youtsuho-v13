@@ -6,6 +6,13 @@
 </div>
 
 > [!IMPORTANT]
+> ## Migration Notice
+> 
+> **This package has been renamed from `discord.js-selfbot-youtsuho-v13` to `discord.js-selfbot-vg18-v13`.**
+>
+> The migration was necessary due to access issues with the previous npm account. All future updates and releases will be published under the new package name. Please update your dependencies accordingly.
+
+> [!IMPORTANT]
 > ## Active Maintenance
 > 
 > **This project is the active continuation of `discord.js-selfbot-v13`.**
@@ -14,17 +21,17 @@
 
 <div align="center">
   <p>
-    <a href="https://www.npmjs.com/package/discord.js-selfbot-youtsuho-v13"><img src="https://img.shields.io/npm/v/discord.js-selfbot-youtsuho-v13.svg" alt="npm version" /></a>
-    <a href="https://www.npmjs.com/package/discord.js-selfbot-youtsuho-v13"><img src="https://img.shields.io/npm/dt/discord.js-selfbot-youtsuho-v13.svg" alt="npm downloads" /></a>
-    <a href="https://github.com/3T6-dsc/discord.js-selfbot-youtsuho-v13/actions"><img src="https://github.com/3T6-dsc/discord.js-selfbot-youtsuho-v13/actions/workflows/lint.yml/badge.svg" alt="Tests status" /></a>
+    <a href="https://www.npmjs.com/package/discord.js-selfbot-vg18-v13"><img src="https://img.shields.io/npm/v/discord.js-selfbot-vg18-v13.svg" alt="npm version" /></a>
+    <a href="https://www.npmjs.com/package/discord.js-selfbot-vg18-v13"><img src="https://img.shields.io/npm/dt/discord.js-selfbot-vg18-v13.svg" alt="npm downloads" /></a>
+    <a href="https://github.com/3T6-dsc/discord.js-selfbot-vg18-v13/actions"><img src="https://github.com/3T6-dsc/discord.js-selfbot-vg18-v13/actions/workflows/lint.yml/badge.svg" alt="Tests status" /></a>
   </p>
 </div>
 
 ## About
 
-<strong>Welcome to `discord.js-selfbot-youtsuho-v13`, based on `discord.js@13.17` and backport `discord.js@14.21.0`</strong>
+<strong>Welcome to `discord.js-selfbot-vg18-v13`, based on `discord.js@13.17` and backport `discord.js@14.21.0`</strong>
 
-- discord.js-selfbot-youtsuho-v13 is a [Node.js](https://nodejs.org) module that allows user accounts to interact with the Discord API v9.
+- discord.js-selfbot-vg18-v13 is a [Node.js](https://nodejs.org) module that allows user accounts to interact with the Discord API v9.
 
 > [!WARNING]
 > **I don't take any responsibility for blocked Discord accounts that used this module.**
@@ -34,7 +41,7 @@
 
 ### <strong>[Document Website](https://discordjs-self-v13.netlify.app/)</strong>
 
-### <strong>[Example Code](https://github.com/3T6-dsc/discord.js-selfbot-youtsuho-v13/tree/main/examples)</strong>
+### <strong>[Example Code](https://github.com/3T6-dsc/discord.js-selfbot-vg18-v13/tree/main/examples)</strong>
 
 ## Features (User)
 - [x] Message
@@ -52,13 +59,13 @@
 > **Node.js 20.18.0 or newer is required**
 
 ```sh-session
-npm install discord.js-selfbot-youtsuho-v13@latest
+npm install discord.js-selfbot-vg18-v13@latest
 ```
 
 ## Example
 
 ```js
-const { Client } = require('discord.js-selfbot-youtsuho-v13');
+const { Client } = require('discord.js-selfbot-vg18-v13');
 const client = new Client();
 
 client.on('ready', async () => {
@@ -104,7 +111,7 @@ console.log(`%cYou now have your token in the clipboard!`, 'font-size: 16px');
 - See [the contribution guide](https://github.com/discordjs/discord.js/blob/main/.github/CONTRIBUTING.md) if you'd like to submit a PR.
 
 ## Need help?
-Github Discussion: [Here](https://github.com/3T6-dsc/discord.js-selfbot-youtsuho-v13/discussions)
+Github Discussion: [Here](https://github.com/3T6-dsc/discord.js-selfbot-vg18-v13/discussions)
 
 ## Credits
 - [Discord.js](https://github.com/discordjs/discord.js)

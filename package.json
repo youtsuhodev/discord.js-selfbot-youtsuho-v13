@@ -1,5 +1,5 @@
 {
-  "name": "discord.js-selfbot-youtsuho-v13",
+  "name": "discord.js-selfbot-vg18-v13",
   "version": "3.7.8",
   "description": "An unofficial discord.js fork for creating selfbots (maintained by Youtsuho)",
   "main": "./src/index.js",
@@ -29,7 +29,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/youtsuhodev/discord.js-selfbot-youtsuho-v13.git"
+    "url": "https://github.com/youtsuhodev/discord.js-selfbot-vg18-v13.git"
   },
   "keywords": [
     "discord.js",
@@ -47,9 +47,9 @@
   "author": "Youtsuho (https://github.com/youtsuhodev)",
   "license": "GNU General Public License v3.0",
   "bugs": {
-    "url": "https://github.com/youtsuhodev/discord.js-selfbot-youtsuho-v13/issues"
+    "url": "https://github.com/youtsuhodev/discord.js-selfbot-vg18-v13/issues"
   },
-  "homepage": "https://github.com/youtsuhodev/discord.js-selfbot-youtsuho-v13#readme",
+  "homepage": "https://github.com/youtsuhodev/discord.js-selfbot-vg18-v13#readme",
   "dependencies": {
     "@discordjs/builders": "^1.6.3",
     "@discordjs/collection": "^2.1.1",
