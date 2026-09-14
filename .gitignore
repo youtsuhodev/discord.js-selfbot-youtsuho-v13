@@ -83,3 +83,6 @@ data/
 update.mjs
 yarn.lock
 package-lock.json
+.npmrc
+publish-github.bat
+publish-npm.bat
