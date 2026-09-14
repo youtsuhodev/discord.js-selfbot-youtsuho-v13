@@ -32,14 +32,14 @@ jobs:
       - name: Get current published version (if any)
         id: current_version
         run: |
-          version=$(npm view discord.js-selfbot-vg18-v13 version || echo "none")
+          version=$(npm view discord.js-selfbot-v13 version || echo "none")
           echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Deprecate previous version
         if: steps.current_version.outputs.version != 'none'
         run: |
           echo "Deprecating version ${{ steps.current_version.outputs.version }}"
-          npm deprecate discord.js-selfbot-vg18-v13@${{ steps.current_version.outputs.version }} "Deprecated: Please use the latest version."
+          npm deprecate discord.js-selfbot-v13@${{ steps.current_version.outputs.version }} "Deprecated: Please use the latest version."
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
