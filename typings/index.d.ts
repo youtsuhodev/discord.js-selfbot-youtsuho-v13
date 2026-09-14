@@ -530,11 +530,11 @@ export class RESTManager {
 }
 
 // Missing partial types
-export type PartialUser = { id: Snowflake; bot?: boolean; username?: string };
-export type PartialMessage = { id: Snowflake; channelId: Snowflake; guildId?: Snowflake | null };
-export type PartialGuildMember = { id: Snowflake; guild: Guild };
-export type PartialVoiceState = { id: Snowflake | null; channelId: Snowflake | null };
-export type PartialGroupDMChannel = { id: Snowflake };
+export interface PartialUser { id: Snowflake; bot?: boolean; username?: string; }
+export interface PartialMessage { id: Snowflake; channelId: Snowflake; guildId?: Snowflake | null; }
+export interface PartialGuildMember { id: Snowflake; guild: Guild; }
+export interface PartialVoiceState { id: Snowflake | null; channelId: Snowflake | null; }
+export interface PartialGroupDMChannel { id: Snowflake; }
 
 // REST event payloads
 export interface RateLimitData {
@@ -589,7 +589,7 @@ export interface AutoModerationActionExecution {
   matchedContent: Snowflake | null;
 }
 
-export type BaseClientEvents = {
+export interface BaseClientEvents {
   ready: [Client];
   error: [Error];
   warn: [string];
@@ -599,7 +599,7 @@ export type BaseClientEvents = {
   apiRequest: [APIRequest];
   apiResponse: [APIRequest, Response];
   invalidRequestWarning: [InvalidRequestWarningData];
-};
+}
 
 export type ClientEvents = BaseClientEvents & {
   applicationCommandCreate: [ApplicationCommand];
@@ -693,11 +693,11 @@ export type ClientEvents = BaseClientEvents & {
   webhookUpdate: [Channel];
 };
 
-export type RelationshipUpdateObject = {
+export interface RelationshipUpdateObject {
   type: number;
   since: Date;
   nickname: string | null;
-};
+}
 
 export class BaseClient extends EventEmitter {
   public constructor(options?: ClientOptions | WebhookClientOptions);
