@@ -3022,12 +3022,12 @@ export interface BackupVoiceChannelData extends BackupBaseChannelData {
 export interface BackupCategoryData {
   name: string;
   permissions: BackupChannelPermissionData[];
-  children: Array<BackupTextChannelData | BackupVoiceChannelData>;
+  children: (BackupTextChannelData | BackupVoiceChannelData)[];
 }
 
 export interface BackupChannelsData {
   categories: BackupCategoryData[];
-  others: Array<BackupTextChannelData | BackupVoiceChannelData>;
+  others: (BackupTextChannelData | BackupVoiceChannelData)[];
 }
 
 export interface BackupRoleData {
