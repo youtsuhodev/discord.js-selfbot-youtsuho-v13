@@ -1033,8 +1033,11 @@ export class Client<Ready extends boolean = boolean> extends BaseClient {
   public presences: PresenceManager;
   public billing: BillingManager;
   public settings: ClientUserSettingManager;
+  public quests: QuestManager;
+  public backups: BackupManager;
   public readonly sessionId: If<Ready, string, undefined>;
   public destroy(): void;
+  public fetchQuests(fetchExcludedQuests?: boolean): Promise<QuestManager>;
   public fetchGuildPreview(guild: GuildResolvable): Promise<GuildPreview>;
   public fetchInvite(invite: InviteResolvable, options?: ClientFetchInviteOptions): Promise<Invite>;
   public fetchGuildTemplate(template: GuildTemplateResolvable): Promise<GuildTemplate>;
@@ -2806,6 +2809,321 @@ export class BillingManager extends BaseManager {
   public fetchGuildBoosts(): Promise<Collection<Snowflake, GuildBoost>>;
   public currentSubscription: Collection<Snowflake, object>;
   public fetchCurrentSubscription(): Promise<Collection<Snowflake, object>>;
+}
+
+export interface QuestEnrollOptions {
+  location?: number;
+  isTargeted?: boolean;
+  isAndroid?: boolean;
+}
+
+export type QuestTaskType =
+  | 'WATCH_VIDEO'
+  | 'WATCH_VIDEO_ON_MOBILE'
+  | 'PLAY_ON_DESKTOP'
+  | 'PLAY_ON_XBOX'
+  | 'PLAY_ON_PLAYSTATION'
+  | 'STREAM_ON_DESKTOP'
+  | 'PLAY_ACTIVITY'
+  | 'ACHIEVEMENT_IN_ACTIVITY';
+
+export interface QuestTaskConfig {
+  tasks?: Partial<Record<QuestTaskType, { target: number; type?: QuestTaskType; event_name?: string }>>;
+}
+
+export interface QuestUserStatus {
+  enrolled_at?: string;
+  completed_at?: string;
+  claimed_at?: string;
+  progress?: Partial<Record<QuestTaskType, { value: number; event_name?: string; updated_at?: string; completed_at?: string | null }>>;
+}
+
+export interface QuestConfig {
+  expires_at?: string;
+  messages?: {
+    quest_name?: string;
+  };
+  application?: {
+    id: string;
+    name: string;
+  };
+  task_config?: QuestTaskConfig;
+  task_config_v2?: QuestTaskConfig;
+  rewards_config?: {
+    platforms?: string[];
+  };
+}
+
+export interface QuestRawData {
+  id: string;
+  config: QuestConfig;
+  user_status?: QuestUserStatus;
+  traffic_metadata_raw?: string;
+  traffic_metadata_sealed?: string;
+}
+
+export class Quest {
+  constructor(data: QuestRawData);
+  public id: string;
+  public config: QuestConfig;
+  public userStatus?: QuestUserStatus;
+  public readonly raw: QuestRawData;
+  public isExpired(date?: Date): boolean;
+  public isCompleted(): boolean;
+  public hasClaimedRewards(): boolean;
+  public isEnrolledQuest(): boolean;
+  public updateUserStatus(status: QuestUserStatus): void;
+}
+
+export interface QuestData {
+  quests?: QuestRawData[];
+}
+
+export interface OrbsData {
+  balance?: number;
+}
+
+export interface ApplicationData {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  executables: {
+    os: string;
+    name: string;
+    is_launcher: boolean;
+  }[];
+}
+
+export interface QuestHeartbeatOptions {
+  applicationId?: string;
+  streamKey?: string;
+  terminal?: boolean;
+}
+
+export interface QuestVideoProgressOptions {
+  isAndroid?: boolean;
+}
+
+export interface QuestAutoCompleteOptions {
+  redeem?: boolean;
+  fetchExcludedQuests?: boolean;
+}
+
+export class QuestManager extends BaseManager {
+  constructor(client: Client);
+  public cache: Collection<string, Quest>;
+  public get(): Promise<QuestData>;
+  public fetchQuests(fetchExcludedQuests?: boolean): Promise<Collection<string, Quest>>;
+  public detectQuestType(quest: Quest | any): 'VIDEO' | 'GAME' | 'STREAM' | 'ACTIVITY' | 'UNKNOWN';
+  public completeQuest(quest: Quest | string): Promise<Quest>;
+  public completeVideoQuest(
+    quest: Quest | string,
+    taskName?: string,
+    secondsNeeded?: number,
+    secondsDone?: number,
+    isAndroid?: boolean,
+  ): Promise<void>;
+  public completeGameQuest(quest: Quest | string, taskName?: string, secondsNeeded?: number): Promise<void>;
+  public completeStreamQuest(quest: Quest | string, taskName?: string, secondsNeeded?: number): Promise<void>;
+  public completeActivityQuest(quest: Quest | string, taskName?: string, secondsNeeded?: number): Promise<void>;
+  public orbs(): Promise<OrbsData>;
+  public getQuest(id: string): Quest | undefined;
+  public list(): Quest[];
+  public getExpired(date?: Date): Quest[];
+  public getCompleted(): Quest[];
+  public getClaimable(): Quest[];
+  public filterQuestsValid(): Quest[];
+  public filterQuestsValidToRedeem(): Quest[];
+  public hasQuest(id: string): boolean;
+  public getApplicationData(ids: string[]): Promise<ApplicationData[]>;
+  public acceptQuest(questId: string, options?: QuestEnrollOptions): Promise<Quest | undefined>;
+  public videoProgress(questId: string, timestamp: number, options?: QuestVideoProgressOptions): Promise<any>;
+  public heartbeat(questId: string, applicationIdOrOptions: string | QuestHeartbeatOptions, terminal?: boolean): Promise<any>;
+  public redeemQuest(quest: Quest | string): Promise<Quest | undefined>;
+  public doingQuest(quest: Quest | string): Promise<Quest>;
+  public autoCompleteAll(options?: QuestAutoCompleteOptions): Promise<void>;
+  public readonly size: number;
+  public clear(): void;
+  public [Symbol.iterator](): IterableIterator<Quest>;
+}
+
+export interface BackupAfkData {
+  name: string;
+  timeout: number;
+}
+
+export interface BackupWidgetData {
+  enabled: boolean;
+  channel?: string | null;
+}
+
+export interface BackupCommunityData {
+  enabled: boolean;
+  systemChannelFlags: number | null;
+  systemChannelId: Snowflake | null;
+  rulesChannelId: Snowflake | null;
+  publicUpdatesChannelId: Snowflake | null;
+  safetyAlertsChannelId: Snowflake | null;
+}
+
+export interface BackupChannelPermissionData {
+  roleName: string;
+  allow: string;
+  deny: string;
+}
+
+export interface BackupBaseChannelData {
+  oldId?: string;
+  type: keyof typeof ChannelTypes;
+  name: string;
+  parent?: string | null;
+  permissions: BackupChannelPermissionData[];
+}
+
+export interface BackupMessageData {
+  oldId?: string;
+  userId?: string;
+  username: string;
+  avatar?: string;
+  content?: string;
+  embeds?: MessageEmbed[];
+  components?: MessageActionRow[];
+  files?: Record<string, unknown>;
+  pinned?: boolean;
+  sentAt: string;
+}
+
+export interface BackupThreadChannelData {
+  id?: string;
+  type: keyof typeof ChannelTypes;
+  name: string;
+  archived: boolean;
+  autoArchiveDuration: ThreadAutoArchiveDuration;
+  locked: boolean;
+  rateLimitPerUser: number;
+  messages: BackupMessageData[];
+}
+
+export interface BackupTextChannelData extends BackupBaseChannelData {
+  nsfw: boolean;
+  topic?: string;
+  rateLimitPerUser?: number;
+  isNews: boolean;
+  messages: BackupMessageData[];
+  threads: BackupThreadChannelData[];
+}
+
+export interface BackupVoiceChannelData extends BackupBaseChannelData {
+  bitrate: number;
+  userLimit: number;
+}
+
+export interface BackupCategoryData {
+  name: string;
+  permissions: BackupChannelPermissionData[];
+  children: Array<BackupTextChannelData | BackupVoiceChannelData>;
+}
+
+export interface BackupChannelsData {
+  categories: BackupCategoryData[];
+  others: Array<BackupTextChannelData | BackupVoiceChannelData>;
+}
+
+export interface BackupRoleData {
+  oldId: string;
+  name: string;
+  color: string;
+  icon?: string | null;
+  hoist: boolean;
+  permissions: string;
+  mentionable: boolean;
+  position: number;
+  isEveryone: boolean;
+}
+
+export interface BackupBanData {
+  id: Snowflake;
+  reason?: string;
+}
+
+export interface BackupEmojiData {
+  name: string;
+  url?: string;
+  base64?: string;
+}
+
+export interface BackupMemberData {
+  userId: Snowflake;
+  username: string;
+  discriminator: string;
+  avatarUrl?: string;
+  joinedTimestamp: number | null;
+  roles: string[];
+  bot: boolean;
+}
+
+export interface BackupData {
+  name: string;
+  iconURL?: string;
+  iconBase64?: string;
+  verificationLevel: VerificationLevel;
+  explicitContentFilter: ExplicitContentFilterLevel;
+  defaultMessageNotifications: DefaultMessageNotificationLevel | number;
+  afk?: BackupAfkData | null;
+  widget: BackupWidgetData;
+  community?: BackupCommunityData;
+  splashURL?: string;
+  splashBase64?: string;
+  bannerURL?: string;
+  bannerBase64?: string;
+  channels: BackupChannelsData;
+  roles: BackupRoleData[];
+  bans: BackupBanData[];
+  emojis: BackupEmojiData[];
+  members: BackupMemberData[];
+  createdTimestamp: number;
+  guildID: string;
+  id: Snowflake;
+}
+
+export interface BackupInfo {
+  id: string;
+  size: number;
+  data: BackupData;
+}
+
+export interface BackupCreateOptions {
+  backupId?: string;
+  backupID?: string;
+  maxMessagesPerChannel?: number;
+  jsonSave?: boolean;
+  jsonBeautify?: boolean;
+  doNotBackup?: string[];
+  backupMembers?: boolean;
+  saveImages?: string;
+}
+
+export interface BackupLoadOptions {
+  clearGuildBeforeRestore?: boolean;
+  maxMessagesPerChannel?: number;
+  allowedMentions?: MessageMentionOptions;
+  doNotBackup?: string[];
+}
+
+export class BackupCacheManager {
+  public constructor(manager: BackupManager);
+  public create(guildId: Snowflake, options?: BackupCreateOptions): Promise<BackupData>;
+  public delete(backupId: string): boolean;
+  public clearAll(): void;
+  public load(guildId: Snowflake, backupId: string, options?: BackupLoadOptions): Promise<BackupData>;
+  public get(backupId: string): BackupInfo | undefined;
+  public list(): string[];
+}
+
+export class BackupManager extends BaseManager {
+  public constructor(client: Client);
+  public cache: BackupCacheManager;
 }
 
 export class Session extends Base {

@@ -57,6 +57,7 @@ const Intents = require('./Intents');
  * This is a 32-character Base32 string (excluding spaces), typically shown only once during your 2FA setup (QR code), or in the "Manual Entry" section.
  * The library automatically removes spaces and converts the secret to uppercase.
  * Example value: 'ftc3 uz6q 5lpw 2kew 4thr vtyp n2cu topn' or 'WSLIVE6EKYSRMVRBZLFGG2KVIVJMMQY5'
+ * @property {Snowflake|null} [questVoiceChannelId=null] Voice channel id used for stream/activity quests
  * @property {number} [closeTimeout=5000] The amount of time in milliseconds to wait for the close frame to be received
  * from the WebSocket.
  * <info>Don't have this too high/low. It's best to have it between 2000-6000 ms.</info>
@@ -175,6 +176,7 @@ class Options extends null {
         throw err;
       },
       TOTPKey: null,
+      questVoiceChannelId: null,
       closeTimeout: 5_000,
       waitGuildTimeout: 15_000,
       shardCount: 1,

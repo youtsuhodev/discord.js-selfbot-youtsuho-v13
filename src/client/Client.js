@@ -11,12 +11,14 @@ const ActionsManager = require('./actions/ActionsManager');
 const ClientVoiceManager = require('./voice/ClientVoiceManager');
 const WebSocketManager = require('./websocket/WebSocketManager');
 const { Error, TypeError } = require('../errors');
+const BackupManager = require('../managers/BackupManager');
 const BaseGuildEmojiManager = require('../managers/BaseGuildEmojiManager');
 const BillingManager = require('../managers/BillingManager');
 const ChannelManager = require('../managers/ChannelManager');
 const ClientUserSettingManager = require('../managers/ClientUserSettingManager');
 const GuildManager = require('../managers/GuildManager');
 const PresenceManager = require('../managers/PresenceManager');
+const QuestManager = require('../managers/QuestManager');
 const RelationshipManager = require('../managers/RelationshipManager');
 const SessionManager = require('../managers/SessionManager');
 const UserManager = require('../managers/UserManager');
@@ -373,6 +375,8 @@ class Client extends BaseClient {
     registry.register('sessions', () => new SessionManager(this), 7);
 
     // Managers secondaires (basse priorité)
+    registry.register('quests', () => new QuestManager(this), 3);
+    registry.register('backups', () => new BackupManager(this), 3);
     registry.register('notes', () => new UserNoteManager(this), 3);
     registry.register('billing', () => new BillingManager(this), 3);
     registry.register('settings', () => new ClientUserSettingManager(this), 3);
@@ -394,6 +398,8 @@ class Client extends BaseClient {
       'presences',
       'relationships',
       'sessions',
+      'quests',
+      'backups',
       'notes',
       'billing',
       'settings',
@@ -430,6 +436,16 @@ class Client extends BaseClient {
       workers: this._workerManager.getStats(),
       eventBatcher: this.ws?.eventBatcher?.getStats(),
     };
+  }
+
+  /**
+   * Fetch all quests for the logged-in user
+   * @param {boolean} [fetchExcludedQuests=false] Whether to fetch excluded quest details
+   * @returns {Promise<QuestManager>}
+   */
+  async fetchQuests(fetchExcludedQuests = false) {
+    await this.quests.fetchQuests(fetchExcludedQuests);
+    return this.quests;
   }
 
   /**
